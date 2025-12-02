@@ -57,7 +57,7 @@ def name_create_log(component, iter: int = None):
         path_logfile_stdout.parent.mkdir(parents=True, exist_ok=True)
 
     # return stdout and stderr files
-    return path_logfile_stdout, path_logfile_stderr
+    return path_logfile_stdout.absolute(), path_logfile_stderr.absolute()
 
 
 def component_log_capture(compute_func, iter: int = None):
