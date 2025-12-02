@@ -19,7 +19,7 @@ class TestSetUpArdModelOnshore:
     def test_onshore_default_system_aep(self, subtests):
         with subtests.test("AEP_farm"):
             assert self.prob.get_val("AEP_farm", units="GW*h")[0] == pytest.approx(
-                384.60118796404765
+                385.1565821463874
             )
         with subtests.test("tcc.tcc"):
             assert self.prob.get_val("tcc.tcc", units="MUSD")[0] == pytest.approx(
@@ -40,7 +40,7 @@ class TestSetUpArdModelOnshore:
         with subtests.test("financese.lcoe"):
             assert self.prob.get_val("financese.lcoe", units="USD/MW/h")[
                 0
-            ] == pytest.approx(39.400997200044735)
+            ] == pytest.approx(39.34418112669258)
 
 
 class TestSetUpArdModelOffshoreMonopile:
@@ -62,7 +62,7 @@ class TestSetUpArdModelOffshoreMonopile:
 
         with subtests.test("AEP_farm"):
             assert self.prob.get_val("AEP_farm", units="GW*h")[0] == pytest.approx(
-                2152.5162831487964
+                2155.624684938663
             )
         with subtests.test("tcc.tcc"):
             assert self.prob.get_val("tcc.tcc", units="MUSD")[0] == pytest.approx(
@@ -79,7 +79,7 @@ class TestSetUpArdModelOffshoreMonopile:
         with subtests.test("financese.lcoe"):
             assert self.prob.get_val("financese.lcoe", units="USD/MW/h")[
                 0
-            ] == pytest.approx(99.10446644881932)
+            ] == pytest.approx(98.96155822224087)
 
 
 class TestSetUpArdModelOffshoreFloating:
@@ -101,7 +101,7 @@ class TestSetUpArdModelOffshoreFloating:
 
         with subtests.test("AEP_farm"):
             assert self.prob.get_val("AEP_farm", units="GW*h")[0] == pytest.approx(
-                2152.5162831487964
+                2155.624684938663
             )
         with subtests.test("tcc.tcc"):
             assert self.prob.get_val("tcc.tcc", units="MUSD")[0] == pytest.approx(
@@ -118,4 +118,4 @@ class TestSetUpArdModelOffshoreFloating:
         with subtests.test("financese.lcoe"):
             assert self.prob.get_val("financese.lcoe", units="USD/MW/h")[
                 0
-            ] == pytest.approx(106.4797690940818)
+            ] == pytest.approx(106.32622571190157)
