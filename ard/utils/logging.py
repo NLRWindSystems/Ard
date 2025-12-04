@@ -8,7 +8,7 @@ import openmdao.core.component
 
 def name_create_log(component, iter: int = None):
     """
-    for a given component, clean and create component- and rank-unique logfiles
+    For a given component, clean and create component- and rank-unique logfiles.
 
     Take a component and create logs, parallel to the reports file, mirroring
     the OpenMDAO model structure with stdout and stderr files for each rank,
@@ -29,7 +29,8 @@ def name_create_log(component, iter: int = None):
     """
 
     # make sure we are dealing with an OM component
-    assert isinstance(component, openmdao.core.component.Component)
+    if not isinstance(component, openmdao.core.component.Component):
+        raise TypeError(f"Expected openmdao.core.component.Component, got {type(component)}")
 
     logs_dir = ["logs"]
     if iter is not None:
@@ -62,9 +63,9 @@ def name_create_log(component, iter: int = None):
 
 def component_log_capture(compute_func, iter: int = None):
     """
-    decorator that redirects stdout and stderr to disciplinary rankwise logfiles
+    Decorator that redirects stdout and stderr to component-wise and rank-wise logfiles.
 
-    This decorator will redirects stdout and stderr to discipline-wise and
+    This decorator will redirect stdout and stderr to component-wise and
     rank-wise logfiles, which are determined by the `name_create_log` function.
     The decorator uses context managers to redirect output streams to these
     files, ensuring that all print statements and errors within the function are
