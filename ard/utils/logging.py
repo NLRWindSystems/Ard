@@ -30,7 +30,9 @@ def name_create_log(component, iter: int = None):
 
     # make sure we are dealing with an OM component
     if not isinstance(component, openmdao.core.component.Component):
-        raise TypeError(f"Expected openmdao.core.component.Component, got {type(component)}")
+        raise TypeError(
+            f"Expected openmdao.core.component.Component, got {type(component)}"
+        )
 
     logs_dir = ["logs"]
     if iter is not None:
