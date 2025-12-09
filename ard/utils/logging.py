@@ -8,26 +8,33 @@ import openmdao.core.component
 
 def extract_iter(component):
     # get problem meta from the component if it's there
-    if hasattr(component, '_problem_meta'):
+    if hasattr(component, "_problem_meta"):
         problem_meta = component._problem_meta
     else:
-        print("DEBUG!!!!! COMPONENT DOESN'T STORE A META-PROBLEM... SO NO ITERATION NUMBER.")
+        print(
+            "DEBUG!!!!! COMPONENT DOESN'T STORE A META-PROBLEM... SO NO ITERATION NUMBER."
+        )
         return None  # component doesn't store a meta-problem... so no iteration number
 
     if "model_ref" in problem_meta:
         model = problem_meta["model_ref"]()
     else:
-        print("DEBUG!!!!! PROBLEM DOESN'T HAVE A MODEL_REF THOUGH... SO NO ITERATION NUMBER.")
+        print(
+            "DEBUG!!!!! PROBLEM DOESN'T HAVE A MODEL_REF THOUGH... SO NO ITERATION NUMBER."
+        )
         return None  # problem doesn't have a model_ref though... so no iteration number
 
     if hasattr(model, "iter_count"):
         iter_count = model.iter_count
     else:
-        print("DEBUG!!!!! WE GOT SO CLOSE... BUT WE DIDN'T FIND AN ITER_COUNT ON MODEL.")
+        print(
+            "DEBUG!!!!! WE GOT SO CLOSE... BUT WE DIDN'T FIND AN ITER_COUNT ON MODEL."
+        )
         return None  # we got so close... but we didn't find an iter_count on model
 
     print(f"DEBUG!!!!! iter_count found: {iter_count}")
     return iter_count
+
 
 def name_create_log(component, iter: int = None):
     """
@@ -57,7 +64,9 @@ def name_create_log(component, iter: int = None):
             f"Expected openmdao.core.component.Component, got {type(component)}"
         )
 
-    logs_dir = ["logs",]
+    logs_dir = [
+        "logs",
+    ]
     iter = extract_iter(component)
     if iter is not None:
         logs_dir += [f"iter_{iter:04d}"]
