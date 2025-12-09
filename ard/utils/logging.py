@@ -10,13 +10,16 @@ def extract_iter(component):
 
     # extract the iter_count iff it exists, otherwise return None
 
-    if not hasattr(component, "_problem_meta"): return None
+    if not hasattr(component, "_problem_meta"):
+        return None
     problem_meta = component._problem_meta
 
-    if "model_ref" not in problem_meta: return None
+    if "model_ref" not in problem_meta:
+        return None
     model = problem_meta["model_ref"]()
 
-    if not hasattr(model, "iter_count"): return None
+    if not hasattr(model, "iter_count"):
+        return None
     iter_count = model.iter_count
 
     return iter_count
