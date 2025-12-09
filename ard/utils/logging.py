@@ -126,6 +126,14 @@ def component_log_capture(compute_func, iter: int = None):
     @wraps(compute_func)
     def wrapper(self, *args, **kwargs):
 
+        # extract from modeling options the stdio_capture option iff it exists
+        stdio_capture = getattr(self, "modeling_options", {}).get("stdio_capture")
+        # bail out, returning the function w/ no changes if it doesn't
+        if not stdio_capture:
+            return compute_func(self, *args, **kwargs)
+
+        # if we get here, we want to capture stdio
+
         # get log file paths
         path_stdout_log, path_stderr_log = name_create_log(self)
 

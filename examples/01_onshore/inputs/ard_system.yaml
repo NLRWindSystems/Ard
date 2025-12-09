@@ -43,6 +43,7 @@ modeling_options:
     interconnect_voltage_kV: 130.0
     tcc_per_kW: 1300.00  # (USD/kW)
     opex_per_kW: 44.00  # (USD/kWh)
+  stdio_capture: True
 
 system: onshore
 
