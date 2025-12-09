@@ -44,6 +44,40 @@ def extract_iter(component):
     return iter_count
 
 
+def get_storage_directory(
+    component,
+    storage_type: str = "logs",
+    get_iter: bool = False,
+    clean: bool = False,
+):
+    # the storage type we're doing (logs, discipline scripts, etc.)
+    storage_dir = [
+        storage_type,
+    ]
+    # if there's an iteration number to grab, grab it and add it to the dir
+    iter = extract_iter(component) if get_iter else None
+    if iter:
+        storage_dir += [f"iter_{iter:04d}"]
+    # mirror the comp path for a log directory
+    subdir_logger = component.pathname.split(".")
+    # find the reports directory
+    dir_reports = Path(component._problem_meta["reports_dir"])
+    # put the storage directory next to it
+    path_storage = Path(dir_reports.parent, *storage_dir, *subdir_logger)
+
+    # make a clean log location for this component if permitted
+    try:
+        path_storage.mkdir(parents=True, exist_ok=False)
+    except FileExistsError:
+        if clean:
+            shutil.rmtree(path_storage, ignore_errors=True)
+            path_storage.mkdir(parents=True, exist_ok=True)
+        else:
+            raise
+
+    return path_storage
+
+
 def name_create_log(component, iter: int = None):
     """
     For a given component, clean and create component- and rank-unique logfiles.
@@ -72,33 +106,12 @@ def name_create_log(component, iter: int = None):
             f"Expected openmdao.core.component.Component, got {type(component)}"
         )
 
-    logs_dir = [
-        "logs",
-    ]
-    iter = extract_iter(component)
-    if iter is not None:
-        logs_dir += [f"iter_{iter:04d}"]
-    subdir_logger = component.pathname.split(
-        "."
-    )  # mirror the comp path for a log directory
-    dir_reports = Path(
-        component._problem_meta["reports_dir"]
-    )  # find the reports directory
-    path_logfile_template = Path(
-        dir_reports.parent,
-        *logs_dir,
-        *subdir_logger,
-        f"%s_rank{component._comm.rank:03d}.txt",
-    )  # put the logs directory parallel to it
+    path_logfile_template = (
+        get_storage_directory(component, "logs", True, clean=True)
+        / f"%s_rank{component._comm.rank:03d}.txt"
+    )
     path_logfile_stdout = Path(path_logfile_template.as_posix() % "stdout")
     path_logfile_stderr = Path(path_logfile_template.as_posix() % "stderr")
-
-    # make a clean log location for this component
-    try:
-        path_logfile_stdout.parent.mkdir(parents=True, exist_ok=False)
-    except FileExistsError:
-        shutil.rmtree(path_logfile_stdout.parent, ignore_errors=True)
-        path_logfile_stdout.parent.mkdir(parents=True, exist_ok=True)
 
     # return stdout and stderr files
     return path_logfile_stdout.absolute(), path_logfile_stderr.absolute()

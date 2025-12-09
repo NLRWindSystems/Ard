@@ -205,16 +205,17 @@ class FLORISFarmComponent:
             wind_shear=self.windIO["site"]["energy_resource"]["wind_resource"].get(
                 "shear"
             ),
-            reference_wind_height=(
-                self.wind_query.reference_height
-                if hasattr(self.wind_query, "reference_height")
-                else None
+            reference_wind_height=getattr(
+                self.wind_query,
+                "reference_height",
+                None,
             ),
         )
 
         self.case_title = self.options["case_title"]
-        self.dir_floris = Path("case_files", self.case_title, "floris_inputs")
-        self.dir_floris.mkdir(parents=True, exist_ok=True)
+        self.dir_floris = ard_logging.get_storage_directory(
+            self, "inputs", get_iter=True, clean=True
+        )
 
     def compute(self, inputs):
         """
@@ -367,10 +368,10 @@ class FLORISBatchPower(templates.BatchFarmPowerTemplate, FLORISFarmComponent):
             layout_y=inputs["y_turbines"],
             wind_data=self.time_series,
             yaw_angles=np.array([inputs["yaw_turbines"]]),
-            reference_wind_height=(
-                self.wind_query.reference_height
-                if hasattr(self.wind_query, "reference_height")
-                else None
+            reference_wind_height=getattr(
+                self.wind_query,
+                "reference_height",
+                None,
             ),
         )
         if "peak_shaving_fraction" in self.modeling_options.get("floris", {}):
@@ -465,10 +466,10 @@ class FLORISAEP(templates.FarmAEPTemplate):
             layout_y=inputs["y_turbines"],
             wind_data=self.wind_query,
             yaw_angles=np.array([inputs["yaw_turbines"]]),
-            reference_wind_height=(
-                self.wind_query.reference_height
-                if hasattr(self.wind_query, "reference_height")
-                else None
+            reference_wind_height=getattr(
+                self.wind_query,
+                "reference_height",
+                None,
             ),
         )
         if "peak_shaving_fraction" in self.modeling_options.get("floris", {}):
