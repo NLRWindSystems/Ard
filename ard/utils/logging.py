@@ -7,8 +7,27 @@ import openmdao.core.component
 
 
 def extract_iter(component):
+    """
+    Extract the iter_count iff it exists, otherwise return None
 
-    # extract the iter_count iff it exists, otherwise return None
+    Extract the iteration count from a component's associated model.
+    This function attempts to retrieve the iteration count from a component by
+    traversing through its problem metadata and model reference. It safely
+    handles cases where any of the required attributes or keys don't exist.
+
+    Parameters
+    ----------
+        component: An object that may contain a _problem_meta attribute with
+                  model reference information.
+    Returns
+    -------
+        int or None: The iteration count from the model if it exists and is
+                    accessible, otherwise None.
+            The function returns None in the following cases:
+            - component doesn't have a _problem_meta attribute
+            - problem_meta doesn't contain a "model_ref" key
+            - the model doesn't have an iter_count attribute
+    """
 
     if not hasattr(component, "_problem_meta"):
         return None
@@ -110,13 +129,16 @@ def component_log_capture(compute_func, iter: int = None):
         # get log file paths
         path_stdout_log, path_stderr_log = name_create_log(self)
 
-        # use context manager to redirect stdout & stderr
-        with (
-            open(path_stdout_log, "a") as stdout_file,
-            open(path_stderr_log, "a") as stderr_file,
-            redirect_stdout(stdout_file),
-            redirect_stderr(stderr_file),
-        ):
-            return compute_func(self, *args, **kwargs)
+        try:
+            # use context manager to redirect stdout & stderr
+            with (
+                open(path_stdout_log, "a") as stdout_file,
+                open(path_stderr_log, "a") as stderr_file,
+                redirect_stdout(stdout_file),
+                redirect_stderr(stderr_file),
+            ):
+                return compute_func(self, *args, **kwargs)
+        except Exception:
+            raise  # make sure the exception is raised
 
     return wrapper
