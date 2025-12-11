@@ -43,6 +43,31 @@ def get_storage_directory(
     get_iter: bool = False,
     clean: bool = False,
 ):
+    """
+    Get a storage directory for the component constructed here.
+
+    Take a component and create a storage directory (for, e.g. logs or init
+    files), mirroring the OpenMDAO model structure as subdirectories, returning
+    a pathlib.Path to the storage directory.
+
+    Parameters
+    ----------
+    component : openmdao.core.Component
+        an OpenMDAO component for which we want to create a storage directory
+    storage_type : str, optional
+        the type of storage sub-directory to make, by default "logs"
+    get_iter : bool, optional
+        should the storage directory tree be given an iteration subdirectory, by
+        default False
+    clean : bool, optional
+        should the directory tree, if it already exists, be cleaned out, by
+        default False
+
+    Returns
+    -------
+    pathlib.Path
+        the path to the storage subdirectory created
+    """
     # the storage type we're doing (logs, discipline scripts, etc.)
     storage_dir = [
         storage_type,
@@ -61,7 +86,7 @@ def get_storage_directory(
     # make a clean log location for this component if permitted
     try:
         path_storage.mkdir(parents=True, exist_ok=False)
-    except FileExistsError:
+    except FileExistsError:  # handle a FileExists, but raise anything else
         if clean:
             shutil.rmtree(path_storage, ignore_errors=True)
             path_storage.mkdir(parents=True, exist_ok=True)
