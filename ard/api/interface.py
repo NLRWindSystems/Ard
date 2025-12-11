@@ -113,6 +113,7 @@ def set_up_ard_model(input_dict: Union[str, dict], root_data_path: str = None):
 def set_up_system_recursive(
     input_dict: dict,
     system_name: str = "top_level",
+    case_name: str | None = None,
     work_dir: str = "case_files",
     parent_group=None,
     modeling_options: dict = None,
@@ -130,9 +131,21 @@ def set_up_system_recursive(
     Returns:
         om.Problem: The OpenMDAO problem with the defined system hierarchy.
     """
+
+    # grab the case name if it's supplied in the system yaml
+    if case_name is None:
+        case_name = modeling_options.get(
+            "case_name",
+            input_dict.get("modeling_options", {}).get(
+                "case_name",
+                "ard_problem",
+            ),
+        )
+
     # Initialize the top-level problem if no parent group is provided
     if parent_group is None:
         prob = om.Problem(
+            name=case_name,
             work_dir=work_dir,
         )
         parent_group = prob.model
