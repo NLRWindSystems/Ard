@@ -1,5 +1,5 @@
 modeling_options:
-  # case_name: COBYLA_optimization
+  case_name: COBYLA_optimization
   windIO_plant: !include windio.yaml
   layout:
     type: gridfarm
