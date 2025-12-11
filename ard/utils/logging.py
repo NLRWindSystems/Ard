@@ -29,17 +29,10 @@ def extract_iter(component):
             - the model doesn't have an iter_count attribute
     """
 
-    if not hasattr(component, "_problem_meta"):
-        return None
-    problem_meta = component._problem_meta
-
-    if "model_ref" not in problem_meta:
-        return None
-    model = problem_meta["model_ref"]()
-
-    if not hasattr(model, "iter_count"):
-        return None
-    iter_count = model.iter_count
+    # extract the iter count if it exists, returning and handling none otherwise
+    problem_meta = getattr(component, "_problem_meta", None)
+    model = problem_meta.get("model_ref", lambda _: None)()
+    iter_count = getattr(model, "iter_count", None)
 
     return iter_count
 
