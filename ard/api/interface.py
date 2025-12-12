@@ -1,7 +1,10 @@
+from pathlib import Path
 import importlib
 import openmdao.api as om
 from openmdao.drivers.doe_driver import DOEGenerator
+from openmdao.utils.file_utils import clean_outputs
 from ard.utils.io import load_yaml, replace_key_value
+from ard.utils.logging import prepend_tabs_to_stdio
 from ard.cost.wisdem_wrap import (
     LandBOSSE_setup_latents,
     ORBIT_setup_latents,
@@ -144,20 +147,28 @@ def set_up_system_recursive(
 
     # Initialize the top-level problem if no parent group is provided
     if parent_group is None:
+        # clean out any pre-existing results for this problem
+        print("Running OpenMDAO util to clean the output directories...")
+        prepend_tabs_to_stdio(clean_outputs)(recurse=True, prompt=False)
+        print("... done.\n")
+
         prob = om.Problem(
             name=case_name,
             work_dir=work_dir,
         )
         parent_group = prob.model
-        # parent_group.name = "ard_model"
+
+        print(f"Created top-level OpenMDAO problem: {system_name}.")
     else:
         prob = None
 
     # Add subsystems directly from the input dictionary
     if hasattr(parent_group, "name") and (parent_group.name != ""):
-        print(f"Adding {system_name} to {parent_group.name}")
+        print(
+            f"{''.join(['\t' for _ in range(_depth)])}Adding {system_name} to {parent_group.name}."
+        )
     else:
-        print(f"Adding {system_name}")
+        print(f"{''.join(['\t' for _ in range(_depth)])}Adding {system_name}.")
     if "systems" in input_dict:  # Recursively add nested subsystems]
         if _depth > 0:
             group = parent_group.add_subsystem(
@@ -209,6 +220,9 @@ def set_up_system_recursive(
         for connection in input_dict["connections"]:
             src, tgt = connection  # Unpack the connection as [src, tgt]
             parent_group.connect(src, tgt)
+
+    if _depth == 0:
+        print(f"System {system_name} built.")
 
     # Set up the problem if this is the top-level call
     if prob is not None:
@@ -299,6 +313,7 @@ def set_up_system_recursive(
         )
 
         # setup the openmdao problem
+        print(f"System {system_name} set up.")
         prob.setup()
 
     return prob

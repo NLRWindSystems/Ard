@@ -1,7 +1,9 @@
 from contextlib import redirect_stdout, redirect_stderr
 from functools import wraps
+from io import StringIO
 from pathlib import Path
 import shutil
+import sys
 
 import openmdao.core.component
 
@@ -179,5 +181,29 @@ def component_log_capture(compute_func, iter: int = None):
                 return compute_func(self, *args, **kwargs)
         except Exception:
             raise  # make sure the exception is raised
+
+    return wrapper
+
+
+def prepend_tabs_to_stdio(func, tabs=1):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        old_stdout = sys.stdout
+        sys.stdout = StringIO()
+
+        # run the function
+        returns = func(*args, **kwargs)
+
+        # get capture output and restore stdout
+        output = sys.stdout.getvalue()
+        sys.stdout = old_stdout
+
+        tabset = "".join(["\t" for t in range(tabs)])
+        if output:
+            for line in output.splitlines():
+                print(f"{tabset}{line}")
+
+        # pass through the returns of the function
+        return returns
 
     return wrapper
