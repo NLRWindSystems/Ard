@@ -10,6 +10,7 @@ import floris
 def create_windresource_from_windIO(
     windIOdict: dict,
     resource_type: str = None,  # ["probability", "timeseries", "weibull_sector"]
+    heterogeneous_map: floris.HeterogeneousMap | None = None,
 ):
     """
     takes a windIO plant specification and creates an appropriate wind resource
@@ -120,6 +121,7 @@ def create_windresource_from_windIO(
             wind_speeds=wind_speeds,
             freq_table=probabilities,
             ti_table=turbulence_intensities,
+            heterogeneous_map=heterogeneous_map,
         )
         # stash some metadata for the wind resource
         wind_resource_representation.reference_height = (
@@ -163,6 +165,7 @@ def create_windresource_from_windIO(
             wind_directions=wind_directions,
             wind_speeds=wind_speeds,
             turbulence_intensities=turbulence_intensities,
+            heterogeneous_map=heterogeneous_map,
         )
         # stash some metadata for the wind resource
         wind_resource_representation.reference_height = (
@@ -300,9 +303,25 @@ class BatchFarmPowerTemplate(FarmAeroTemplate):
         super().setup()
 
         # unpack wind query object
+        heterogeneous_map_spec = self.modeling_options.get("heterogeneous_map")
+        if heterogeneous_map_spec:
+            print("ACTIVATING HETEROGENEOUS MAP SPEC")
         self.wind_query = create_windresource_from_windIO(
             self.windIO,
             "timeseries",
+            heterogeneous_map=(
+                floris.HeterogeneousMap(
+                    x=heterogeneous_map_spec["x"],
+                    y=heterogeneous_map_spec["y"],
+                    z=heterogeneous_map_spec.get("z"),
+                    speed_multipliers=heterogeneous_map_spec["speed_multipliers"],
+                    wind_directions=heterogeneous_map_spec["wind_directions"],
+                    wind_speeds=heterogeneous_map_spec["wind_speeds"],
+                    interp_method=heterogeneous_map_spec.get("interp_method"),
+                )
+                if heterogeneous_map_spec
+                else None
+            ),
         )
         self.directions_wind = self.wind_query.wind_directions.tolist()
         self.speeds_wind = self.wind_query.wind_speeds.tolist()
@@ -428,9 +447,25 @@ class FarmAEPTemplate(FarmAeroTemplate):
         super().setup()
         data_path = str(self.options["data_path"])
 
+        heterogeneous_map_spec = self.modeling_options.get("heterogeneous_map")
+        if heterogeneous_map_spec:
+            print("ACTIVATING HETEROGENEOUS MAP SPEC")
         self.wind_query = create_windresource_from_windIO(
             self.windIO,
             "probability",
+            heterogeneous_map=(
+                floris.HeterogeneousMap(
+                    x=heterogeneous_map_spec["x"],
+                    y=heterogeneous_map_spec["y"],
+                    z=heterogeneous_map_spec.get("z"),
+                    speed_multipliers=heterogeneous_map_spec["speed_multipliers"],
+                    wind_directions=heterogeneous_map_spec["wind_directions"],
+                    wind_speeds=heterogeneous_map_spec["wind_speeds"],
+                    interp_method=heterogeneous_map_spec.get("interp_method"),
+                )
+                if heterogeneous_map_spec
+                else None
+            ),
         )
 
         if data_path is None:

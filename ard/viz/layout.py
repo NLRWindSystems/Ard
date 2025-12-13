@@ -104,6 +104,30 @@ def plot_layout(
         # linecolor="k",
     )
 
+    # loop over the exclusion types
+    for excl_type_key, excl_type_value in (
+        windIO_dict["site"].get("exclusions", {}).items()
+    ):
+        # handle un-implemented exclusion types
+        if excl_type_key not in ["polygons"]:
+            raise NotImplementedError(
+                f"`{excl_type_key}` exclusions found but not yet handled in Ard plotting capabilities."
+            )
+
+        if excl_type_key == "polygons":
+            for polygon_exclusion in excl_type_value:
+                ax.fill(
+                    polygon_exclusion["x"],
+                    polygon_exclusion["y"],
+                    linestyle="--",
+                    alpha=0.25,
+                    fill=True,
+                    c="r",
+                    # linecolor="k",
+                )
+        else:
+            raise ValueError("this line should be inaccessible.")
+
     # plot turbines
     ax.plot(x_turbines, y_turbines, "ok")
 

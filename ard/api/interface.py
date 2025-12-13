@@ -113,7 +113,7 @@ def set_up_ard_model(input_dict: Union[str, dict], root_data_path: str = None):
 def set_up_system_recursive(
     input_dict: dict,
     system_name: str = "top_level",
-    work_dir: str = "ard_prob_out",
+    work_dir: str = "case_files",
     parent_group=None,
     modeling_options: dict = None,
     analysis_options: dict = None,
@@ -132,7 +132,9 @@ def set_up_system_recursive(
     """
     # Initialize the top-level problem if no parent group is provided
     if parent_group is None:
-        prob = om.Problem(work_dir=work_dir)
+        prob = om.Problem(
+            work_dir=work_dir,
+        )
         parent_group = prob.model
         # parent_group.name = "ard_model"
     else:

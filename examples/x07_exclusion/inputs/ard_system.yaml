@@ -1,0 +1,177 @@
+modeling_options: &modeling_options
+  windIO_plant: !include windio.yaml
+  heterogeneous_map:
+    x: [-100.0, -100.0, 1500.0, 1500.0, 1030.39]
+    y: [-100.0, 1500.0, 1500.0, -100.0, 919.56]
+    speed_multipliers: [
+      [1.0, 1.0, 1.0, 1.0, 1.125],
+      [1.0, 1.0, 1.0, 1.0, 1.125],
+      [1.0, 1.0, 1.0, 1.0, 1.125],
+    ]
+    wind_directions: [0.0, 157.5, 270.0]
+    wind_speeds: [6.0, 7.5, 12.0]
+    interp_method: linear
+  layout:
+    type: gridfarm
+    N_turbines: 7
+    N_substations: 1
+  aero:
+    return_turbine_output: True
+  floris:
+    peak_shaving_fraction: 0.2
+    peak_shaving_TI_threshold: 0.0
+  collection:
+    max_turbines_per_string: 8
+    solver_name: highs
+    solver_options:
+      time_limit: 60
+      mip_gap: 0.02
+    model_options:
+      topology: radial  # radial, branched
+      feeder_route: segmented
+      feeder_limit: unlimited
+  offshore: false
+  floating: false
+  costs:
+    rated_power: 3400000.0  # W
+    num_blades: 3
+    rated_thrust_N: 645645.83964671
+    gust_velocity_m_per_s: 52.5
+    blade_surface_area: 69.7974979
+    tower_mass: 620.4407337521
+    nacelle_mass: 101.98582836439
+    hub_mass: 8.38407517646
+    blade_mass: 14.56341339641
+    foundation_height: 0.0
+    commissioning_cost_kW: 44.0
+    decommissioning_cost_kW: 58.0
+    trench_len_to_substation_km: 50.0
+    distance_to_interconnect_mi: 4.97096954
+    interconnect_voltage_kV: 130.0
+    tcc_per_kW: 1300.00  # (USD/kW)
+    opex_per_kW: 44.00  # (USD/kWh)
+
+system:
+  type: group
+  systems:
+    aepFLORIS:
+      type: component
+      module: ard.farm_aero.floris
+      object: FLORISAEP
+      promotes: ["x_turbines", "y_turbines", "AEP_farm"]
+      kwargs:
+        modeling_options: *modeling_options
+        data_path:
+        case_title: "default"
+    boundary:
+      type: component
+      module: ard.layout.boundary
+      object: FarmBoundaryDistancePolygon
+      promotes: ["*"]
+      kwargs:
+        modeling_options: *modeling_options
+    exclusions:
+      type: component
+      module: ard.layout.exclusions
+      object: FarmExclusionDistancePolygon
+      promotes: ["*"]
+      kwargs:
+        modeling_options: *modeling_options
+    collection:
+      type: component
+      module: ard.collection.optiwindnet_wrap
+      object: OptiwindnetCollection
+      promotes: ["*"]
+      kwargs:
+        modeling_options: *modeling_options
+    spacing_constraint:
+      type: component
+      module: ard.layout.spacing
+      object: TurbineSpacing
+      promotes: ["*"]
+      kwargs:
+        modeling_options: *modeling_options
+    tcc:
+      type: component
+      module: ard.cost.wisdem_wrap
+      object: TurbineCapitalCosts
+      promotes: [
+        "turbine_number",
+        "machine_rating",
+        "tcc_per_kW",
+        "offset_tcc_per_kW",
+      ]
+    landbosse:
+      type: component
+      module: ard.cost.wisdem_wrap
+      object: LandBOSSEWithSpacingApproximations
+      promotes: [
+        "total_length_cables",
+      ]
+      kwargs:
+        modeling_options: *modeling_options
+    opex:
+      type: component
+      module: ard.cost.wisdem_wrap
+      object: OperatingExpenses
+      promotes: [
+        "turbine_number",
+        "machine_rating",
+        "opex_per_kW"
+      ]
+    financese:
+      type: component
+      module: ard.cost.wisdem_wrap
+      object: FinanceSEGroup
+      promotes: [
+        "turbine_number",
+        "machine_rating",
+        "tcc_per_kW",
+        "offset_tcc_per_kW",
+        "opex_per_kW",
+      ]
+      kwargs:
+        modeling_options: *modeling_options
+  connections:
+    - ["AEP_farm", "financese.plant_aep_in"]
+    - ["landbosse.total_capex_kW", "financese.bos_per_kW"]
+
+analysis_options:
+  driver:
+    name: ScipyOptimizeDriver
+    options:
+      optimizer: COBYLA
+      opt_settings:
+        rhobeg: 2.0
+        maxiter: 250
+      debug_print:
+        - desvars
+        - objs
+  design_variables:
+    x_turbines:
+      units: km
+      lower: -0.100
+      upper:  2.100
+      scaler: 0.5
+    y_turbines:
+      units: km
+      lower: -0.500
+      upper:  2.300
+      scaler: 0.5
+  constraints:
+    boundary_distances:
+      units: km
+      upper: 0.0
+      scaler: 2.0
+    exclusion_distances:
+      units: km
+      upper: 0.0
+      scaler: 2.0
+    spacing_constraint.turbine_spacing:
+      units: km
+      lower: 0.552
+  objectives:
+    financese.lcoe:
+      scaler: 1.0
+  recorder:
+    filepath: cases.sql

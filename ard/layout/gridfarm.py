@@ -85,12 +85,16 @@ class GridFarmLayout(templates.LayoutTemplate):
     def setup(self):
         """Setup of OM component."""
         super().setup()
+        x0 = self.modeling_options["layout"].get("x0", 0.0)
+        y0 = self.modeling_options["layout"].get("y0", 0.0)
         spacing_primary = self.modeling_options["layout"]["spacing_primary"]
         spacing_secondary = self.modeling_options["layout"]["spacing_secondary"]
         angle_orientation = self.modeling_options["layout"]["angle_orientation"]
         angle_skew = self.modeling_options["layout"]["angle_skew"]
 
         # add four-parameter grid farm layout DVs
+        self.add_input("x0", x0, units="m")
+        self.add_input("y0", y0, units="m")
         self.add_input("spacing_primary", spacing_primary, units="unitless")
         self.add_input("spacing_secondary", spacing_secondary, units="unitless")
         self.add_input("angle_orientation", angle_orientation, units="deg")
@@ -158,8 +162,8 @@ class GridFarmLayout(templates.LayoutTemplate):
         ).squeeze()
         xyp = Amtx @ (Bmtx @ np.vstack([xi_positions, yi_positions]))
 
-        outputs["x_turbines"] = xyp[0, :].tolist()
-        outputs["y_turbines"] = xyp[1, :].tolist()
+        outputs["x_turbines"] = (xyp[0, :] + inputs["x0"]).tolist()
+        outputs["y_turbines"] = (xyp[1, :] + inputs["y0"]).tolist()
 
         outputs["spacing_effective_primary"] = inputs["spacing_primary"]
         outputs["spacing_effective_secondary"] = np.sqrt(
