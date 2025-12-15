@@ -59,8 +59,7 @@ class TestSetUpArdModelOffshoreMonopile:
         )
 
         self.prob = set_up_ard_model(
-            input_dict=input_dict_path,
-            root_data_path="inputs_offshore_monopile"
+            input_dict=input_dict_path, root_data_path="inputs_offshore_monopile"
         )
 
         self.prob.run_model()
@@ -105,8 +104,7 @@ class TestSetUpArdModelOffshoreFloating:
         )
 
         self.prob = set_up_ard_model(
-            input_dict=input_dict_path,
-            root_data_path="inputs_offshore_floating"
+            input_dict=input_dict_path, root_data_path="inputs_offshore_floating"
         )
 
         self.prob.run_model()
