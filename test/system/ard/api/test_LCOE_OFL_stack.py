@@ -18,7 +18,7 @@ class TestLCOE_OFL_stack:
 
         # load the Ard system input
         path_ard_system = (
-            Path(__file__).parent / "inputs_offshore_monopile" / "ard_system.yaml"
+            Path(__file__).parent / "inputs_offshore_floating" / "ard_system.yaml"
         )
         input_dict = load_yaml(path_ard_system)
 
