@@ -1,6 +1,7 @@
 system: "onshore"
 
 modeling_options:
+  case_name: "LCOE_LB"
   windIO_plant:
     name: "LB system test plant"
     site:
