@@ -21,7 +21,9 @@ class TestLCOE_OFL_stack:
             Path(__file__).parent / "inputs_offshore_floating" / "ard_system.yaml"
         )
         input_dict = load_yaml(path_ard_system)
-        input_dict["modeling_options"]["case_name"] = input_dict["modeling_options"]["case_name"] + "_serial"
+        input_dict["modeling_options"]["case_name"] = (
+            input_dict["modeling_options"]["case_name"] + "_serial"
+        )
 
         # get, validate, and load the windIO dict
         windIOdict = input_dict["modeling_options"]["windIO_plant"]
