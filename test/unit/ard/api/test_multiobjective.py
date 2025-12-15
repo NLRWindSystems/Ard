@@ -21,6 +21,12 @@ class TestMultiobjectiveSetUp:
             input_dict=input_dict,
         )
 
+    def teardown_method(self):
+
+        # cleanup the ard model
+        self.da_plough.cleanup()
+        # necessary due to final_setup() call below?
+
     def test_response_variables(self, subtests):
 
         # preemptively run the final setup
