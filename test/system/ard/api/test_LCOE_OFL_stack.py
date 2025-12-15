@@ -21,9 +21,6 @@ class TestLCOE_OFL_stack:
             Path(__file__).parent / "inputs_offshore_floating" / "ard_system.yaml"
         )
         input_dict = load_yaml(path_ard_system)
-        input_dict["modeling_options"]["case_name"] = (
-            input_dict["modeling_options"]["case_name"] + "_serial"
-        )
 
         # get, validate, and load the windIO dict
         windIOdict = input_dict["modeling_options"]["windIO_plant"]
@@ -33,6 +30,12 @@ class TestLCOE_OFL_stack:
         self.prob = glue.set_up_ard_model(
             input_dict=input_dict, root_data_path="inputs_onshore"
         )
+
+    def teardown_method(self):
+
+        # cleanup the ard model
+        self.prob.cleanup()
+        # necessary due to something about windows???
 
     def test_model(self, subtests):
 
