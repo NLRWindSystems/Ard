@@ -8,8 +8,6 @@ from openmdao.utils.assert_utils import assert_check_partials
 
 import pytest
 
-from ard import collection
-
 optiwindnet = pytest.importorskip("optiwindnet")
 
 from optiwindnet.plotting import gplot
@@ -405,9 +403,12 @@ class TestOptiWindNetCollection4TurbinesOverlap:
         self.x_turbines = 7.0 * 130.0 * np.array([-1.0, 0.0, 0.0, 1.0])
         self.y_turbines = 7.0 * 130.0 * np.array([-1.0, 0.0, 0.0, 1.0])
         self.x_substations = np.array([-100.0])
-        self.y_substations = np.array([ 100.0])
+        self.y_substations = np.array([100.0])
         self.modeling_options = make_modeling_options(
-            self.x_turbines, self.y_turbines, self.x_substations, self.y_substations,
+            self.x_turbines,
+            self.y_turbines,
+            self.x_substations,
+            self.y_substations,
         )
 
         # create the OpenMDAO model
@@ -421,7 +422,6 @@ class TestOptiWindNetCollection4TurbinesOverlap:
 
         self.prob = om.Problem(model)
         self.prob.setup()
-
 
     def test_jitter_and_warning(self):
         """
@@ -454,14 +454,16 @@ class TestOptiWindNetCollection4TurbinesOverlap:
         prob.set_val("collection.x_substations", self.x_substations)
         prob.set_val("collection.y_substations", self.y_substations)
 
-        with pytest.warns(match=r"coincident turbines and/or substations in optiwindnet setup"):
+        with pytest.warns(
+            match=r"coincident turbines and/or substations in optiwindnet setup"
+        ):
             # run optiwindnet
             prob.run_model()
 
         # make sure that it still runs and we match a reference value
         total_length_cables_reference = 2715.29003976
         assert np.isclose(
-            prob.get_val('collection.total_length_cables'),
+            prob.get_val("collection.total_length_cables"),
             total_length_cables_reference,
         )
 
@@ -528,10 +530,10 @@ class TestOptiWindNetCollection4TurbinesOverlap:
         )
 
         # move the turbines so they don't overlap anymore
-        self.x_turbines[1] = 0.3*self.x_turbines[0] + 0.7*self.x_turbines[-1]
-        self.y_turbines[1] = 0.3*self.y_turbines[0] + 0.7*self.y_turbines[-1]
-        self.x_turbines[2] = 0.7*self.x_turbines[0] + 0.3*self.x_turbines[-1]
-        self.y_turbines[2] = 0.7*self.y_turbines[0] + 0.3*self.y_turbines[-1]
+        self.x_turbines[1] = 0.3 * self.x_turbines[0] + 0.7 * self.x_turbines[-1]
+        self.y_turbines[1] = 0.3 * self.y_turbines[0] + 0.7 * self.y_turbines[-1]
+        self.x_turbines[2] = 0.7 * self.x_turbines[0] + 0.3 * self.x_turbines[-1]
+        self.y_turbines[2] = 0.7 * self.y_turbines[0] + 0.3 * self.y_turbines[-1]
 
         prob = om.Problem(model)
         prob.setup()
@@ -550,6 +552,6 @@ class TestOptiWindNetCollection4TurbinesOverlap:
         # make sure that it still runs and we match a reference value
         total_length_cables_reference = 2612.01404984
         assert np.isclose(
-            prob.get_val('collection.total_length_cables'),
+            prob.get_val("collection.total_length_cables"),
             total_length_cables_reference,
         )

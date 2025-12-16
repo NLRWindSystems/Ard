@@ -30,16 +30,19 @@ def _own_L_from_inputs(inputs: dict, discrete_inputs: dict) -> nx.Graph:
     VertexCTR = np.vstack([VertexC[:T, :], VertexC[-R:, :]])
     jitter_eps = 1.0e-3  # 0.001m magnitude jitter
     jitter_normal = np.array([-1.0, 1.0])  # on a fixed axis we'll normalize
-    jitter_normal = jitter_normal/np.sqrt(np.sum(jitter_normal**2))
-    repeat_accumulate = np.array([
-        int(np.sum(np.all(VertexCTR[:ivv,:] == vv, axis=1))) for ivv, vv in enumerate(VertexCTR)
-    ])
+    jitter_normal = jitter_normal / np.sqrt(np.sum(jitter_normal**2))
+    repeat_accumulate = np.array(
+        [
+            int(np.sum(np.all(VertexCTR[:ivv, :] == vv, axis=1)))
+            for ivv, vv in enumerate(VertexCTR)
+        ]
+    )
     if np.any(repeat_accumulate > 0):
         warn(
             f"WARNING: detected {np.sum(repeat_accumulate > 0)} coincident "
             f"turbines and/or substations in optiwindnet setup..."
         )
-        VertexCTR += jitter_eps*np.outer(repeat_accumulate, jitter_normal)
+        VertexCTR += jitter_eps * np.outer(repeat_accumulate, jitter_normal)
     VertexC[:T, :] = VertexCTR[:T, :]
     VertexC[-R:, :] = VertexCTR[-R:, :]
 
