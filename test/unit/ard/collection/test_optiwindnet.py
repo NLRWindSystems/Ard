@@ -1,13 +1,14 @@
 import copy
 from pathlib import Path
-import platform, sys
+import warnings
 
 import numpy as np
-import matplotlib.pyplot as plt
 import openmdao.api as om
 from openmdao.utils.assert_utils import assert_check_partials
 
 import pytest
+
+from ard import collection
 
 optiwindnet = pytest.importorskip("optiwindnet")
 
@@ -395,3 +396,160 @@ class TestOptiWindNetCollection5Turbines:
         # automated OpenMDAO fails because it re-runs the network work
         cpJ = prob.check_partials(out_stream=None)
         assert_check_partials(cpJ, atol=1.0e-5, rtol=1.0e-3)
+
+
+class TestOptiWindNetCollection4TurbinesOverlap:
+
+    def setup_method(self):
+        self.n_turbines = 4
+        self.x_turbines = 7.0 * 130.0 * np.array([-1.0, 0.0, 0.0, 1.0])
+        self.y_turbines = 7.0 * 130.0 * np.array([-1.0, 0.0, 0.0, 1.0])
+        self.x_substations = np.array([-100.0])
+        self.y_substations = np.array([ 100.0])
+        self.modeling_options = make_modeling_options(
+            self.x_turbines, self.y_turbines, self.x_substations, self.y_substations,
+        )
+
+        # create the OpenMDAO model
+        model = om.Group()
+        self.collection = model.add_subsystem(
+            "collection",
+            ard_own.OptiwindnetCollection(
+                modeling_options=self.modeling_options,
+            ),
+        )
+
+        self.prob = om.Problem(model)
+        self.prob.setup()
+
+
+    def test_jitter_and_warning(self):
+        """
+        Test that OptiwindnetCollection issues a warning when turbines and/or substations
+        have coincident coordinates, but still produces valid results.
+
+        This test verifies that:
+        1. A warning is raised matching the pattern about coincident turbines/substations
+        2. The model still executes successfully despite the warning
+        3. The calculated total cable length matches the expected reference value
+        """
+
+        # deep copy modeling options and adjust
+        modeling_options = self.modeling_options
+
+        # create the OpenMDAO model
+        model = om.Group()
+        collection_mini = model.add_subsystem(
+            "collection",
+            ard_own.OptiwindnetCollection(
+                modeling_options=modeling_options,
+            ),
+        )
+
+        prob = om.Problem(model)
+        prob.setup()
+
+        prob.set_val("collection.x_turbines", self.x_turbines)
+        prob.set_val("collection.y_turbines", self.y_turbines)
+        prob.set_val("collection.x_substations", self.x_substations)
+        prob.set_val("collection.y_substations", self.y_substations)
+
+        with pytest.warns(match=r"coincident turbines and/or substations in optiwindnet setup"):
+            # run optiwindnet
+            prob.run_model()
+
+        # make sure that it still runs and we match a reference value
+        total_length_cables_reference = 2715.29003976
+        assert np.isclose(
+            prob.get_val('collection.total_length_cables'),
+            total_length_cables_reference,
+        )
+
+        # make sure the values in the optiwindnet graph are each close to a
+        # turbine but also include jitter where it should be
+        T = collection_mini.graph.graph["T"]
+        R = collection_mini.graph.graph["R"]
+        VertexC = np.array(collection_mini.graph.graph["VertexC"])
+
+        for xy_VertexCT in VertexC[:T]:
+            # check if this turbine coordinate matches a turbine position (exactly or with jitter)
+            matches_exactly = np.any(
+                np.logical_and(
+                    xy_VertexCT[0] == self.x_turbines,
+                    xy_VertexCT[1] == self.y_turbines,
+                )
+            )
+            matches_with_jitter = np.any(
+                np.logical_and(
+                    np.isclose(xy_VertexCT[0], self.x_turbines, atol=1e-2),
+                    np.isclose(xy_VertexCT[1], self.y_turbines, atol=1e-2),
+                )
+            )
+            assert matches_exactly or matches_with_jitter
+
+        for xy_VertexCR in VertexC[-R:]:
+            # check if this turbine coordinate matches a turbine position (exactly or with jitter)
+            matches_exactly = np.any(
+                np.logical_and(
+                    xy_VertexCR[0] == self.x_substations,
+                    xy_VertexCR[1] == self.y_substations,
+                )
+            )
+            matches_with_jitter = np.any(
+                np.logical_and(
+                    np.isclose(xy_VertexCR[0], self.x_substations, atol=1e-2),
+                    np.isclose(xy_VertexCR[1], self.y_substations, atol=1e-2),
+                )
+            )
+            assert matches_exactly or matches_with_jitter
+
+    def test_nowarning(self):
+        """
+        Test that no warnings are raised when turbines are positioned without overlap.
+
+        This test verifies that the OptiwindnetCollection component runs without
+        warnings when turbine positions are adjusted to avoid overlap. It repositions
+        turbines along a linear interpolation between the first and last turbine
+        positions, then runs the model with warnings set to raise errors. The test
+        also validates that the total cable length calculation produces the expected
+        reference value.
+        """
+
+        # deep copy modeling options and adjust
+        modeling_options = self.modeling_options
+
+        # create the OpenMDAO model
+        model = om.Group()
+        collection_mini = model.add_subsystem(
+            "collection",
+            ard_own.OptiwindnetCollection(
+                modeling_options=modeling_options,
+            ),
+        )
+
+        # move the turbines so they don't overlap anymore
+        self.x_turbines[1] = 0.3*self.x_turbines[0] + 0.7*self.x_turbines[-1]
+        self.y_turbines[1] = 0.3*self.y_turbines[0] + 0.7*self.y_turbines[-1]
+        self.x_turbines[2] = 0.7*self.x_turbines[0] + 0.3*self.x_turbines[-1]
+        self.y_turbines[2] = 0.7*self.y_turbines[0] + 0.3*self.y_turbines[-1]
+
+        prob = om.Problem(model)
+        prob.setup()
+
+        prob.set_val("collection.x_turbines", self.x_turbines)
+        prob.set_val("collection.y_turbines", self.y_turbines)
+        prob.set_val("collection.x_substations", self.x_substations)
+        prob.set_val("collection.y_substations", self.y_substations)
+
+        # make sure no warnings occur when the turbines don't overlap
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            # run optiwindnet
+            prob.run_model()
+
+        # make sure that it still runs and we match a reference value
+        total_length_cables_reference = 2612.01404984
+        assert np.isclose(
+            prob.get_val('collection.total_length_cables'),
+            total_length_cables_reference,
+        )

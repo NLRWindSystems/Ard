@@ -1,3 +1,5 @@
+from warnings import warn
+
 import networkx as nx
 import numpy as np
 
@@ -10,6 +12,7 @@ from . import templates
 
 
 def _own_L_from_inputs(inputs: dict, discrete_inputs: dict) -> nx.Graph:
+    # get the metadata and data for the OWN warm-starter from the inputs
     T = len(inputs["x_turbines"])
     R = len(inputs["x_substations"])
     name_case = "farm"
@@ -22,6 +25,25 @@ def _own_L_from_inputs(inputs: dict, discrete_inputs: dict) -> nx.Graph:
     VertexC[:T, 1] = inputs["y_turbines"]
     VertexC[-R:, 0] = inputs["x_substations"]
     VertexC[-R:, 1] = inputs["y_substations"]
+
+    # add jitter to duplicate turbine/substation positions
+    VertexCTR = np.vstack([VertexC[:T, :], VertexC[-R:, :]])
+    jitter_eps = 1.0e-3  # 0.001m magnitude jitter
+    jitter_normal = np.array([-1.0, 1.0])  # on a fixed axis we'll normalize
+    jitter_normal = jitter_normal/np.sqrt(np.sum(jitter_normal**2))
+    repeat_accumulate = np.array([
+        int(np.sum(np.all(VertexCTR[:ivv,:] == vv, axis=1))) for ivv, vv in enumerate(VertexCTR)
+    ])
+    if np.any(repeat_accumulate > 0):
+        warn(
+            f"WARNING: detected {np.sum(repeat_accumulate > 0)} coincident "
+            f"turbines and/or substations in optiwindnet setup..."
+        )
+        VertexCTR += jitter_eps*np.outer(repeat_accumulate, jitter_normal)
+    VertexC[:T, :] = VertexCTR[:T, :]
+    VertexC[-R:, :] = VertexCTR[-R:, :]
+
+    # put together the inputs for optiwindnet
     site = dict(
         T=T,
         R=R,
@@ -29,6 +51,8 @@ def _own_L_from_inputs(inputs: dict, discrete_inputs: dict) -> nx.Graph:
         handle=name_case,
         VertexC=VertexC,
     )
+
+    # handle the boundary if it exists
     if B > 0:
         VertexC[T:-R, 0] = discrete_inputs["x_border"]
         VertexC[T:-R, 1] = discrete_inputs["y_border"]
