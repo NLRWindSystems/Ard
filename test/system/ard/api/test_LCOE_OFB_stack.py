@@ -31,6 +31,12 @@ class TestLCOE_OFB_stack:
             input_dict=input_dict, root_data_path="inputs_onshore"
         )
 
+    def teardown_method(self):
+
+        # cleanup the ard model
+        self.prob.cleanup()
+        # necessary due to something about windows???
+
     def test_model(self, subtests):
 
         # set up the working/design variables

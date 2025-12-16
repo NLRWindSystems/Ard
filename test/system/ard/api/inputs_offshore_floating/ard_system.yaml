@@ -1,6 +1,7 @@
 system: "offshore_floating"
 
 modeling_options:
+  case_name: "LCOE_OFL"
   windIO_plant:
     name: "OFL system test plant"
     site:

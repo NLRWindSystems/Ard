@@ -1,6 +1,7 @@
 system: "offshore_monopile"
 
 modeling_options:
+  case_name: "LCOE_OFB"
   windIO_plant:
     name: "OFB system test plant"
     site:
