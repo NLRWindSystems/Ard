@@ -28,30 +28,47 @@ def _own_L_from_inputs(inputs: dict, discrete_inputs: dict) -> nx.Graph:
 
     # add perturbation to duplicate turbine/substation positions
     VertexCTR = np.vstack([VertexC[:T, :], VertexC[-R:, :]])
-    perturbation_eps = 1.0e-6  # magnitude perturbation in m
-    perturbation_normal = np.array([-1.0, 1.0])  # on a fixed axis we'll normalize
-    perturbation_normal = perturbation_normal / np.sqrt(np.sum(perturbation_normal**2))
+    perturbation_eps = 1.0e-6  # base magnitude of perturbation in m
+    perturbation_normal = np.array([-1.0, 1.0])  # set a fixed axis to perturb on
+    perturbation_normal = perturbation_normal / np.sqrt(
+        np.sum(perturbation_normal**2)
+    )  # normalize the perturbation
+    # go through the turbine/substation vertices and count how many times a
+    # given vertex has appeared before
     repeat_accumulate = np.array(
         [
             int(np.sum(np.all(VertexCTR[:ivv, :] == vv, axis=1)))
             for ivv, vv in enumerate(VertexCTR)
         ]
     )
-    if np.any(repeat_accumulate > 0):
+    if np.any(repeat_accumulate > 0):  # only if there are any repeats
         warn_string = (
             f"\nDetected {np.sum(repeat_accumulate > 0)} coincident "
             f"turbines and/or substations in optiwindnet setup."
+        )  # start a warning string for the UserWarning
+        # TODO: make Ard warnings?
+
+        # create perturbation adjustements s.t. vertices w/ multiplicity > 2
+        # are adjusted to be fully unique!
+        adjustments = perturbation_eps * np.outer(
+            repeat_accumulate, perturbation_normal
         )
-        adjustments = perturbation_eps * np.outer(repeat_accumulate, perturbation_normal)
+        # for each adjustments add to the warning string
         for idx, dxy in enumerate(adjustments[:T, :]):
-            if np.sum(dxy != 0) == 0: continue
-            warn_string += f"\n\tadjusting turbine #{idx} at {VertexCTR[idx, :]} by adding {dxy}"
+            if np.sum(dxy != 0) == 0:
+                continue
+            warn_string += f"\n\tadjusting turbine #{idx} from {VertexCTR[idx, :]} to  {VertexCTR[idx, :] + dxy}"
         for idx, dxy in enumerate((adjustments[-R:, :])[::-1, :]):
-            if np.sum(dxy != 0) == 0: continue
-            warn_string += f"\n\tadjusting substation #{idx} at {VertexCTR[-(idx+1), :]} by adding {dxy}"
-        VertexCTR += adjustments
+            if np.sum(dxy != 0) == 0:
+                continue
+            warn_string += f"\n\tadjusting substation #{idx} from {VertexCTR[-(idx+1), :]} to {VertexCTR[-(idx+1), :] + dxy}"
+        # output the final warning
         warn(warn_string)
 
+        # store the adjustments
+        VertexCTR += adjustments
+
+    # apply the adjustments
     VertexC[:T, :] = VertexCTR[:T, :]
     VertexC[-R:, :] = VertexCTR[-R:, :]
 

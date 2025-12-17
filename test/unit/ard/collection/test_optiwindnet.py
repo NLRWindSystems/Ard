@@ -485,8 +485,10 @@ class TestOptiWindNetCollection4TurbinesOverlap:
             )
             matches_with_perturbation = np.any(
                 np.logical_and(
-                    np.isclose(xy_VertexCT[0], self.x_turbines, atol=1e-2) & (xy_VertexCT[0] != self.x_turbines),
-                    np.isclose(xy_VertexCT[1], self.y_turbines, atol=1e-2) & (xy_VertexCT[1] != self.y_turbines),
+                    np.isclose(xy_VertexCT[0], self.x_turbines, atol=1e-2)
+                    & (xy_VertexCT[0] != self.x_turbines),
+                    np.isclose(xy_VertexCT[1], self.y_turbines, atol=1e-2)
+                    & (xy_VertexCT[1] != self.y_turbines),
                 )
             )
             with subtests.test(f"turbine {idx_T} exact xor perturbed"):
@@ -502,8 +504,10 @@ class TestOptiWindNetCollection4TurbinesOverlap:
             )
             matches_with_perturbation = np.any(
                 np.logical_and(
-                    np.isclose(xy_VertexCR[0], self.x_substations, atol=1e-2) & (xy_VertexCR[0] != self.x_substations),
-                    np.isclose(xy_VertexCR[1], self.y_substations, atol=1e-2) & (xy_VertexCR[1] != self.y_substations),
+                    np.isclose(xy_VertexCR[0], self.x_substations, atol=1e-2)
+                    & (xy_VertexCR[0] != self.x_substations),
+                    np.isclose(xy_VertexCR[1], self.y_substations, atol=1e-2)
+                    & (xy_VertexCR[1] != self.y_substations),
                 )
             )
             with subtests.test(f"substation {idx_T} exact xor perturbed"):
@@ -652,8 +656,10 @@ class TestOptiWindNetCollectionSubstationOverlap:
             )
             matches_with_perturbation = np.any(
                 np.logical_and(
-                    np.isclose(xy_VertexCT[0], self.x_turbines, atol=1e-2) & (xy_VertexCT[0] != self.x_turbines),
-                    np.isclose(xy_VertexCT[1], self.y_turbines, atol=1e-2) & (xy_VertexCT[1] != self.y_turbines),
+                    np.isclose(xy_VertexCT[0], self.x_turbines, atol=1e-2)
+                    & (xy_VertexCT[0] != self.x_turbines),
+                    np.isclose(xy_VertexCT[1], self.y_turbines, atol=1e-2)
+                    & (xy_VertexCT[1] != self.y_turbines),
                 )
             )
             with subtests.test(f"turbine {idx_T} exact xor perturbed"):
@@ -669,8 +675,10 @@ class TestOptiWindNetCollectionSubstationOverlap:
             )
             matches_with_perturbation = np.any(
                 np.logical_and(
-                    np.isclose(xy_VertexCR[0], self.x_substations, atol=1e-2) & (xy_VertexCR[0] != self.x_substations),
-                    np.isclose(xy_VertexCR[1], self.y_substations, atol=1e-2) & (xy_VertexCR[1] != self.y_substations),
+                    np.isclose(xy_VertexCR[0], self.x_substations, atol=1e-2)
+                    & (xy_VertexCR[0] != self.x_substations),
+                    np.isclose(xy_VertexCR[1], self.y_substations, atol=1e-2)
+                    & (xy_VertexCR[1] != self.y_substations),
                 )
             )
             with subtests.test(f"substation {idx_T} exact xor perturbed"):
