@@ -457,9 +457,10 @@ class TestOptiWindNetCollection4TurbinesOverlap:
         with subtests.test("warn on duplicate turbine"):
             with pytest.warns(
                 match=r"coincident turbines and/or substations in optiwindnet setup"
-            ):
+            ) as warning:
                 # run optiwindnet
                 prob.run_model()
+                for w in warning: print(w.message)
 
         # make sure that it still runs and we match a reference value
         total_length_cables_reference = 2715.29003976
@@ -628,9 +629,10 @@ class TestOptiWindNetCollectionSubstationOverlap:
         with subtests.test("warn on turbine/substation intersection"):
             with pytest.warns(
                 match=r"coincident turbines and/or substations in optiwindnet setup"
-            ):
+            ) as warning:
                 # run optiwindnet
                 prob.run_model()
+                for w in warning: print(w.message)
 
         # make sure that it still runs and we match a reference value
         total_length_cables_reference = 3860.80302628
