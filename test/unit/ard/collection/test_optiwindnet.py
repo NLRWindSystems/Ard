@@ -423,7 +423,7 @@ class TestOptiWindNetCollection4TurbinesOverlap:
         self.prob = om.Problem(model)
         self.prob.setup()
 
-    def test_jitter_and_warning(self):
+    def test_perturbation_and_warning(self, subtests):
         """
         Test that OptiwindnetCollection issues a warning when turbines and/or substations
         have coincident coordinates, but still produces valid results.
@@ -454,58 +454,62 @@ class TestOptiWindNetCollection4TurbinesOverlap:
         prob.set_val("collection.x_substations", self.x_substations)
         prob.set_val("collection.y_substations", self.y_substations)
 
-        with pytest.warns(
-            match=r"coincident turbines and/or substations in optiwindnet setup"
-        ):
-            # run optiwindnet
-            prob.run_model()
+        with subtests.test("warn on duplicate turbine"):
+            with pytest.warns(
+                match=r"coincident turbines and/or substations in optiwindnet setup"
+            ):
+                # run optiwindnet
+                prob.run_model()
 
         # make sure that it still runs and we match a reference value
         total_length_cables_reference = 2715.29003976
-        assert np.isclose(
-            prob.get_val("collection.total_length_cables"),
-            total_length_cables_reference,
-        )
+        with subtests.test("match reference value"):
+            assert np.isclose(
+                prob.get_val("collection.total_length_cables"),
+                total_length_cables_reference,
+            )
 
         # make sure the values in the optiwindnet graph are each close to a
-        # turbine but also include jitter where it should be
+        # turbine but also include perturbation where it should be
         T = collection_mini.graph.graph["T"]
         R = collection_mini.graph.graph["R"]
         VertexC = np.array(collection_mini.graph.graph["VertexC"])
 
-        for xy_VertexCT in VertexC[:T]:
-            # check if this turbine coordinate matches a turbine position (exactly or with jitter)
+        for idx_T, xy_VertexCT in enumerate(VertexC[:T]):
+            # check if this turbine coordinate matches a turbine position (exactly or with perturbation)
             matches_exactly = np.any(
                 np.logical_and(
                     xy_VertexCT[0] == self.x_turbines,
                     xy_VertexCT[1] == self.y_turbines,
                 )
             )
-            matches_with_jitter = np.any(
+            matches_with_perturbation = np.any(
                 np.logical_and(
-                    np.isclose(xy_VertexCT[0], self.x_turbines, atol=1e-2),
-                    np.isclose(xy_VertexCT[1], self.y_turbines, atol=1e-2),
+                    np.isclose(xy_VertexCT[0], self.x_turbines, atol=1e-2) & (xy_VertexCT[0] != self.x_turbines),
+                    np.isclose(xy_VertexCT[1], self.y_turbines, atol=1e-2) & (xy_VertexCT[1] != self.y_turbines),
                 )
             )
-            assert matches_exactly or matches_with_jitter
+            with subtests.test(f"turbine {idx_T} exact xor perturbed"):
+                assert matches_exactly ^ matches_with_perturbation  # boolean xor
 
         for xy_VertexCR in VertexC[-R:]:
-            # check if this turbine coordinate matches a turbine position (exactly or with jitter)
+            # check if this turbine coordinate matches a turbine position (exactly or with perturbation)
             matches_exactly = np.any(
                 np.logical_and(
                     xy_VertexCR[0] == self.x_substations,
                     xy_VertexCR[1] == self.y_substations,
                 )
             )
-            matches_with_jitter = np.any(
+            matches_with_perturbation = np.any(
                 np.logical_and(
-                    np.isclose(xy_VertexCR[0], self.x_substations, atol=1e-2),
-                    np.isclose(xy_VertexCR[1], self.y_substations, atol=1e-2),
+                    np.isclose(xy_VertexCR[0], self.x_substations, atol=1e-2) & (xy_VertexCR[0] != self.x_substations),
+                    np.isclose(xy_VertexCR[1], self.y_substations, atol=1e-2) & (xy_VertexCR[1] != self.y_substations),
                 )
             )
-            assert matches_exactly or matches_with_jitter
+            with subtests.test(f"substation {idx_T} exact xor perturbed"):
+                assert matches_exactly ^ matches_with_perturbation  # boolean xor
 
-    def test_nowarning(self):
+    def test_nowarning(self, subtests):
         """
         Test that no warnings are raised when turbines are positioned without overlap.
 
@@ -544,17 +548,19 @@ class TestOptiWindNetCollection4TurbinesOverlap:
         prob.set_val("collection.y_substations", self.y_substations)
 
         # make sure no warnings occur when the turbines don't overlap
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
-            # run optiwindnet
-            prob.run_model()
+        with subtests.test("no warning for unique turbines/substations"):
+            with warnings.catch_warnings():
+                warnings.simplefilter("error")
+                # run optiwindnet
+                prob.run_model()
 
         # make sure that it still runs and we match a reference value
         total_length_cables_reference = 2612.01404984
-        assert np.isclose(
-            prob.get_val("collection.total_length_cables"),
-            total_length_cables_reference,
-        )
+        with subtests.test("match reference value"):
+            assert np.isclose(
+                prob.get_val("collection.total_length_cables"),
+                total_length_cables_reference,
+            )
 
 
 class TestOptiWindNetCollectionSubstationOverlap:
@@ -584,7 +590,7 @@ class TestOptiWindNetCollectionSubstationOverlap:
         self.prob = om.Problem(model)
         self.prob.setup()
 
-    def test_jitter_and_warning(self):
+    def test_perturbation_and_warning(self, subtests):
         """
         Test that OptiwindnetCollection issues a warning when turbines and/or substations
         have coincident coordinates, but still produces valid results.
@@ -615,58 +621,62 @@ class TestOptiWindNetCollectionSubstationOverlap:
         prob.set_val("collection.x_substations", self.x_substations)
         prob.set_val("collection.y_substations", self.y_substations)
 
-        with pytest.warns(
-            match=r"coincident turbines and/or substations in optiwindnet setup"
-        ):
-            # run optiwindnet
-            prob.run_model()
+        with subtests.test("warn on turbine/substation intersection"):
+            with pytest.warns(
+                match=r"coincident turbines and/or substations in optiwindnet setup"
+            ):
+                # run optiwindnet
+                prob.run_model()
 
         # make sure that it still runs and we match a reference value
-        total_length_cables_reference = 3860.80302528
-        assert np.isclose(
-            prob.get_val("collection.total_length_cables"),
-            total_length_cables_reference,
-        )
+        total_length_cables_reference = 3860.80302628
+        with subtests.test("match reference value"):
+            assert np.isclose(
+                prob.get_val("collection.total_length_cables"),
+                total_length_cables_reference,
+            )
 
         # make sure the values in the optiwindnet graph are each close to a
-        # turbine but also include jitter where it should be
+        # turbine but also include perturbation where it should be
         T = collection_mini.graph.graph["T"]
         R = collection_mini.graph.graph["R"]
         VertexC = np.array(collection_mini.graph.graph["VertexC"])
 
-        for xy_VertexCT in VertexC[:T]:
-            # check if this turbine coordinate matches a turbine position (exactly or with jitter)
+        for idx_T, xy_VertexCT in enumerate(VertexC[:T]):
+            # check if this turbine coordinate matches a turbine position (exactly or with perturbation)
             matches_exactly = np.any(
                 np.logical_and(
                     xy_VertexCT[0] == self.x_turbines,
                     xy_VertexCT[1] == self.y_turbines,
                 )
             )
-            matches_with_jitter = np.any(
+            matches_with_perturbation = np.any(
                 np.logical_and(
-                    np.isclose(xy_VertexCT[0], self.x_turbines, atol=1e-2),
-                    np.isclose(xy_VertexCT[1], self.y_turbines, atol=1e-2),
+                    np.isclose(xy_VertexCT[0], self.x_turbines, atol=1e-2) & (xy_VertexCT[0] != self.x_turbines),
+                    np.isclose(xy_VertexCT[1], self.y_turbines, atol=1e-2) & (xy_VertexCT[1] != self.y_turbines),
                 )
             )
-            assert matches_exactly or matches_with_jitter
+            with subtests.test(f"turbine {idx_T} exact xor perturbed"):
+                assert matches_exactly ^ matches_with_perturbation  # xor
 
-        for xy_VertexCR in VertexC[-R:]:
-            # check if this turbine coordinate matches a turbine position (exactly or with jitter)
+        for idx_R, xy_VertexCR in enumerate(VertexC[-R:]):
+            # check if this turbine coordinate matches a turbine position (exactly or with perturbation)
             matches_exactly = np.any(
                 np.logical_and(
                     xy_VertexCR[0] == self.x_substations,
                     xy_VertexCR[1] == self.y_substations,
                 )
             )
-            matches_with_jitter = np.any(
+            matches_with_perturbation = np.any(
                 np.logical_and(
-                    np.isclose(xy_VertexCR[0], self.x_substations, atol=1e-2),
-                    np.isclose(xy_VertexCR[1], self.y_substations, atol=1e-2),
+                    np.isclose(xy_VertexCR[0], self.x_substations, atol=1e-2) & (xy_VertexCR[0] != self.x_substations),
+                    np.isclose(xy_VertexCR[1], self.y_substations, atol=1e-2) & (xy_VertexCR[1] != self.y_substations),
                 )
             )
-            assert matches_exactly or matches_with_jitter
+            with subtests.test(f"substation {idx_T} exact xor perturbed"):
+                assert matches_exactly ^ matches_with_perturbation  # xor
 
-    def test_nowarning(self):
+    def test_nowarning(self, subtests):
         """
         Test that no warnings are raised when turbines are positioned without overlap.
 
@@ -703,14 +713,16 @@ class TestOptiWindNetCollectionSubstationOverlap:
         prob.set_val("collection.y_substations", self.y_substations)
 
         # make sure no warnings occur when the turbines don't overlap
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
-            # run optiwindnet
-            prob.run_model()
+        with subtests.test("no warning for unique turbines/substations"):
+            with warnings.catch_warnings():
+                warnings.simplefilter("error")
+                # run optiwindnet
+                prob.run_model()
 
         # make sure that it still runs and we match a reference value
         total_length_cables_reference = 3860.80302528
-        assert np.isclose(
-            prob.get_val("collection.total_length_cables"),
-            total_length_cables_reference,
-        )
+        with subtests.test("match reference value"):
+            assert np.isclose(
+                prob.get_val("collection.total_length_cables"),
+                total_length_cables_reference,
+            )

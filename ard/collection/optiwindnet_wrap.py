@@ -26,11 +26,11 @@ def _own_L_from_inputs(inputs: dict, discrete_inputs: dict) -> nx.Graph:
     VertexC[-R:, 0] = inputs["x_substations"]
     VertexC[-R:, 1] = inputs["y_substations"]
 
-    # add jitter to duplicate turbine/substation positions
+    # add perturbation to duplicate turbine/substation positions
     VertexCTR = np.vstack([VertexC[:T, :], VertexC[-R:, :]])
-    jitter_eps = 1.0e-3  # 0.001m magnitude jitter
-    jitter_normal = np.array([-1.0, 1.0])  # on a fixed axis we'll normalize
-    jitter_normal = jitter_normal / np.sqrt(np.sum(jitter_normal**2))
+    perturbation_eps = 1.0e-6  # magnitude perturbation in m
+    perturbation_normal = np.array([-1.0, 1.0])  # on a fixed axis we'll normalize
+    perturbation_normal = perturbation_normal / np.sqrt(np.sum(perturbation_normal**2))
     repeat_accumulate = np.array(
         [
             int(np.sum(np.all(VertexCTR[:ivv, :] == vv, axis=1)))
@@ -38,11 +38,20 @@ def _own_L_from_inputs(inputs: dict, discrete_inputs: dict) -> nx.Graph:
         ]
     )
     if np.any(repeat_accumulate > 0):
-        warn(
-            f"WARNING: detected {np.sum(repeat_accumulate > 0)} coincident "
-            f"turbines and/or substations in optiwindnet setup..."
+        warn_string = (
+            f"\nDetected {np.sum(repeat_accumulate > 0)} coincident "
+            f"turbines and/or substations in optiwindnet setup."
         )
-        VertexCTR += jitter_eps * np.outer(repeat_accumulate, jitter_normal)
+        adjustments = perturbation_eps * np.outer(repeat_accumulate, perturbation_normal)
+        for idx, dxy in enumerate(adjustments[:T, :]):
+            if np.sum(dxy != 0) == 0: continue
+            warn_string += f"\n\tadjusting turbine #{idx} at {VertexCTR[idx, :]} by adding {dxy}"
+        for idx, dxy in enumerate((adjustments[-R:, :])[::-1, :]):
+            if np.sum(dxy != 0) == 0: continue
+            warn_string += f"\n\tadjusting substation #{idx} at {VertexCTR[-(idx+1), :]} by adding {dxy}"
+        VertexCTR += adjustments
+        warn(warn_string)
+
     VertexC[:T, :] = VertexCTR[:T, :]
     VertexC[-R:, :] = VertexCTR[-R:, :]
 
