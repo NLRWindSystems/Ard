@@ -16,6 +16,12 @@ class TestSetUpArdModelOnshore:
 
         self.prob.run_model()
 
+    def teardown_method(self):
+
+        # cleanup the ard model
+        self.prob.cleanup()
+        # necessary due to something about windows???
+
     def test_onshore_default_system_aep(self, subtests):
         with subtests.test("AEP_farm"):
             assert self.prob.get_val("AEP_farm", units="GW*h")[0] == pytest.approx(
@@ -58,6 +64,12 @@ class TestSetUpArdModelOffshoreMonopile:
 
         self.prob.run_model()
 
+    def teardown_method(self):
+
+        # cleanup the ard model
+        self.prob.cleanup()
+        # necessary due to something about windows???
+
     def test_offshore_monopile_default_system(self, subtests):
 
         with subtests.test("AEP_farm"):
@@ -96,6 +108,12 @@ class TestSetUpArdModelOffshoreFloating:
         )
 
         self.prob.run_model()
+
+    def teardown_method(self):
+
+        # cleanup the ard model
+        self.prob.cleanup()
+        # necessary due to something about windows???
 
     def test_offshore_floating_default_system(self, subtests):
 

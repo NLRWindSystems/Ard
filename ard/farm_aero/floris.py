@@ -6,6 +6,7 @@ import numpy as np
 import floris
 import floris.turbine_library.turbine_utilities
 
+import ard.utils.logging as ard_logging
 import ard.farm_aero.templates as templates
 
 
@@ -190,6 +191,7 @@ class FLORISFarmComponent:
         """Initialization-time FLORIS management."""
         self.options.declare("case_title")
 
+    @ard_logging.component_log_capture
     def setup(self):
         """Setup-time FLORIS management."""
 
@@ -203,16 +205,17 @@ class FLORISFarmComponent:
             wind_shear=self.windIO["site"]["energy_resource"]["wind_resource"].get(
                 "shear"
             ),
-            reference_wind_height=(
-                self.wind_query.reference_height
-                if hasattr(self.wind_query, "reference_height")
-                else None
+            reference_wind_height=getattr(
+                self.wind_query,
+                "reference_height",
+                None,
             ),
         )
 
         self.case_title = self.options["case_title"]
-        self.dir_floris = Path("case_files", self.case_title, "floris_inputs")
-        self.dir_floris.mkdir(parents=True, exist_ok=True)
+        self.dir_floris = ard_logging.get_storage_directory(
+            self, "inputs", get_iter=True, clean=True
+        )
 
     def compute(self, inputs):
         """
@@ -340,13 +343,16 @@ class FLORISBatchPower(templates.BatchFarmPowerTemplate, FLORISFarmComponent):
         super().initialize()  # run super class script first!
         FLORISFarmComponent.initialize(self)  # FLORIS superclass
 
+    @ard_logging.component_log_capture
     def setup(self):
         super().setup()  # run super class script first!
         FLORISFarmComponent.setup(self)  # setup a FLORIS run
 
+    @ard_logging.component_log_capture
     def setup_partials(self):
         FLORISFarmComponent.setup_partials(self)
 
+    @ard_logging.component_log_capture
     def compute(self, inputs, outputs):
 
         # generate the list of conditions for evaluation
@@ -362,10 +368,10 @@ class FLORISBatchPower(templates.BatchFarmPowerTemplate, FLORISFarmComponent):
             layout_y=inputs["y_turbines"],
             wind_data=self.time_series,
             yaw_angles=np.array([inputs["yaw_turbines"]]),
-            reference_wind_height=(
-                self.wind_query.reference_height
-                if hasattr(self.wind_query, "reference_height")
-                else None
+            reference_wind_height=getattr(
+                self.wind_query,
+                "reference_height",
+                None,
             ),
         )
         if "peak_shaving_fraction" in self.modeling_options.get("floris", {}):
@@ -442,13 +448,16 @@ class FLORISAEP(templates.FarmAEPTemplate):
         super().initialize()  # run super class script first!
         FLORISFarmComponent.initialize(self)  # add on FLORIS superclass
 
+    @ard_logging.component_log_capture
     def setup(self):
         super().setup()  # run super class script first!
         FLORISFarmComponent.setup(self)  # setup a FLORIS run
 
+    @ard_logging.component_log_capture
     def setup_partials(self):
         super().setup_partials()
 
+    @ard_logging.component_log_capture
     def compute(self, inputs, outputs):
 
         # set up and run the floris model
@@ -457,10 +466,10 @@ class FLORISAEP(templates.FarmAEPTemplate):
             layout_y=inputs["y_turbines"],
             wind_data=self.wind_query,
             yaw_angles=np.array([inputs["yaw_turbines"]]),
-            reference_wind_height=(
-                self.wind_query.reference_height
-                if hasattr(self.wind_query, "reference_height")
-                else None
+            reference_wind_height=getattr(
+                self.wind_query,
+                "reference_height",
+                None,
             ),
         )
         if "peak_shaving_fraction" in self.modeling_options.get("floris", {}):
@@ -477,5 +486,6 @@ class FLORISAEP(templates.FarmAEPTemplate):
         outputs["power_turbines"] = FLORISFarmComponent.get_power_turbines(self)
         outputs["thrust_turbines"] = FLORISFarmComponent.get_thrust_turbines(self)
 
+    @ard_logging.component_log_capture
     def setup_partials(self):
         FLORISFarmComponent.setup_partials(self)

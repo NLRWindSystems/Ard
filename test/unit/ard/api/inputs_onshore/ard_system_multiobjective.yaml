@@ -1,4 +1,5 @@
 modeling_options: &modeling_options
+  case_name: test_multiobjective
   windIO_plant: !include windio.yaml
   layout:
       type: gridfarm
