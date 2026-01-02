@@ -1,3 +1,5 @@
+from warnings import warn
+
 import networkx as nx
 import numpy as np
 
@@ -10,6 +12,7 @@ from . import templates
 
 
 def _own_L_from_inputs(inputs: dict, discrete_inputs: dict) -> nx.Graph:
+    # get the metadata and data for the OWN warm-starter from the inputs
     T = len(inputs["x_turbines"])
     R = len(inputs["x_substations"])
     name_case = "farm"
@@ -22,6 +25,54 @@ def _own_L_from_inputs(inputs: dict, discrete_inputs: dict) -> nx.Graph:
     VertexC[:T, 1] = inputs["y_turbines"]
     VertexC[-R:, 0] = inputs["x_substations"]
     VertexC[-R:, 1] = inputs["y_substations"]
+
+    # add perturbation to duplicate turbine/substation positions
+    VertexCTR = np.vstack([VertexC[:T, :], VertexC[-R:, :]])
+    perturbation_eps = 1.0e-6  # base magnitude of perturbation in m
+    perturbation_normal = np.array([-1.0, 1.0])  # set a fixed axis to perturb on
+    perturbation_normal = perturbation_normal / np.sqrt(
+        np.sum(perturbation_normal**2)
+    )  # normalize the perturbation
+    # go through the turbine/substation vertices and count how many times a
+    # given vertex has appeared before
+    repeat_accumulate = np.array(
+        [
+            int(np.sum(np.all(VertexCTR[:ivv, :] == vv, axis=1)))
+            for ivv, vv in enumerate(VertexCTR)
+        ]
+    )
+    if np.any(repeat_accumulate > 0):  # only if there are any repeats
+        warn_string = (
+            f"\nDetected {np.sum(repeat_accumulate > 0)} coincident "
+            f"turbines and/or substations in optiwindnet setup."
+        )  # start a warning string for the UserWarning
+        # TODO: make Ard warnings?
+
+        # create perturbation adjustements s.t. vertices w/ multiplicity > 2
+        # are adjusted to be fully unique!
+        adjustments = perturbation_eps * np.outer(
+            repeat_accumulate, perturbation_normal
+        )
+        # for each adjustments add to the warning string
+        for idx, dxy in enumerate(adjustments[:T, :]):
+            if np.sum(dxy != 0) == 0:
+                continue
+            warn_string += f"\n\tadjusting turbine #{idx} from {VertexCTR[idx, :]} to  {VertexCTR[idx, :] + dxy}"
+        for idx, dxy in enumerate((adjustments[-R:, :])[::-1, :]):
+            if np.sum(dxy != 0) == 0:
+                continue
+            warn_string += f"\n\tadjusting substation #{idx} from {VertexCTR[-(idx+1), :]} to {VertexCTR[-(idx+1), :] + dxy}"
+        # output the final warning
+        warn(warn_string)
+
+        # store the adjustments
+        VertexCTR += adjustments
+
+    # apply the adjustments
+    VertexC[:T, :] = VertexCTR[:T, :]
+    VertexC[-R:, :] = VertexCTR[-R:, :]
+
+    # put together the inputs for optiwindnet
     site = dict(
         T=T,
         R=R,
@@ -29,6 +80,8 @@ def _own_L_from_inputs(inputs: dict, discrete_inputs: dict) -> nx.Graph:
         handle=name_case,
         VertexC=VertexC,
     )
+
+    # handle the boundary if it exists
     if B > 0:
         VertexC[T:-R, 0] = discrete_inputs["x_border"]
         VertexC[T:-R, 1] = discrete_inputs["y_border"]
