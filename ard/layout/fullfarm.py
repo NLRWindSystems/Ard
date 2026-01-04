@@ -81,5 +81,4 @@ class FullFarmLanduse(ard.layout.templates.LanduseTemplate):
 
         # area tight is equal to the convex hull area for the points in sq. km.
         area_tight = mp.convex_hull.buffer(lengthscale_layback).area / 1000**2
-        print(f"DEBUG!!!!! AREA TIGHT: {area_tight}")
         outputs["area_tight"] = mp.convex_hull.buffer(lengthscale_layback).area / 1000**2
