@@ -48,42 +48,11 @@ system: onshore
 
 analysis_options:
   driver:
-    # our NSGA2
     name: NSGA2
     options:
-      max_gen: 30
-      pop_size: 20
-      # Pc: 0.9
-      # eta_c: 20.0
-      # Pm: 0.1
-      # eta_m: 20.0
-      run_parallel: True
-    # # pos NSGA2
-    # name: pyOptSparseDriver
-    # options:
-    #   optimizer: NSGA2
-    #   opt_settings:
-    #     maxGen: 20
-    #     PopSize: 64  # powers of two here?
-    #   # compute_pareto: True
-    #   debug_print:
-    #     - desvars
-    #     - objs
-    # # OM GA
-    # name: SimpleGADriver
-    # options:
-    #   bits:
-    #     spacing_primary: 32
-    #     spacing_secondary: 32
-    #     angle_orientation: 32
-    #     angle_skew: 32
-    #   max_gen: 20
-    #   pop_size: 100
-    #   compute_pareto: True
-    #   # run_parallel: True
-    #   debug_print:
-    #     - desvars
-    #     - objs
+      max_gen: 10
+      pop_size: 10
+      run_parallel: False
   design_variables:
     spacing_primary:
       lower:  3.0

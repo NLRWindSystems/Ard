@@ -160,7 +160,7 @@ class TestNSGA2:
                 == self.input_dict["analysis_options"]["driver"]["options"]["eta_m"]
             )
 
-    def test_driver_run(self, subtests):
+    def test_driver_run(self):
 
         # make sure the driver runs to completion
         self.da_plough.run_driver()
