@@ -288,6 +288,7 @@ class FLORISFarmComponent:
         SATI = self.fmodel.get_turbine_SATI() * 100
         SAWS = self.fmodel.get_turbine_SAWS()
         turbine_powers_percent = self.fmodel.get_turbine_powers_percent().flatten()
+        turbine_powers_percent = np.ones_like(turbine_powers_percent) * 100.
 
         SATI_collapsed = SATI.reshape(-1, SATI.shape[-1])
         SAWS_collapsed = SAWS.reshape(-1, SAWS.shape[-1])
