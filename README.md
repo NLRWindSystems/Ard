@@ -65,7 +65,7 @@ conda activate ard-env
 conda env config vars set CONDA_SUBDIR=$ARCH_SPEC # this command makes the environment permanently native
 conda install python=3.12 pip -y
 ```
-This can enable interfacing compatibly to software that has not been built for Apple silicon yet.
+The choice of `ARCH_SPEC` and corresponding configuration above can enable interfacing compatibly to software that has not been built for Apple silicon yet.
 
 ### 3. Install Ard
 
