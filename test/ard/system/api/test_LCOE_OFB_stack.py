@@ -2,24 +2,24 @@ from pathlib import Path
 
 import numpy as np
 
-import floris
 import windIO
 
 import ard
 import ard.utils.test_utils
-import ard.api.interface as glue
-import ard.cost.wisdem_wrap as cost_wisdem
 from ard.utils.io import load_yaml
 
+import ard.api.interface as glue
 
-class TestLCOE_OFL_stack:
+
+class TestLCOE_OFB_stack:
 
     def setup_method(self):
 
         # load the Ard system input
         path_ard_system = (
-            Path(__file__).parent / "inputs_offshore_floating" / "ard_system.yaml"
+            Path(__file__).parent / "inputs_offshore_monopile" / "ard_system.yaml"
         )
+
         input_dict = load_yaml(path_ard_system)
 
         # get, validate, and load the windIO dict
@@ -64,16 +64,18 @@ class TestLCOE_OFL_stack:
             test_data,
             Path(ard.__file__).parents[1]
             / "test"
-            / "system"
             / "ard"
+            / "system"
             / "api"
-            / "test_LCOE_OFL_stack_pyrite.npz",
+            / "test_LCOE_OFB_stack_pyrite.npz",
             # rewrite=True,  # uncomment to write new pyrite file
-            # rtol_val=5e-3,  # Temporarily disabled; adjust tolerance for validation if needed
+            rtol_val=5e-3,
             load_only=True,
         )
 
         # Validate each key-value pair using subtests
         for key, value in test_data.items():
             with subtests.test(key=key):
-                assert np.isclose(value, pyrite_data[key], rtol=5e-3)
+                assert np.isclose(value, pyrite_data[key], rtol=5e-3), (
+                    f"Mismatch for {key}: " f"expected {pyrite_data[key]}, got {value}"
+                )

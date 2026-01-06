@@ -11,15 +11,12 @@ from ard.utils.io import load_yaml
 import ard.api.interface as glue
 
 
-class TestLCOE_OFB_stack:
+class TestLCOE_LB_stack:
 
     def setup_method(self):
 
         # load the Ard system input
-        path_ard_system = (
-            Path(__file__).parent / "inputs_offshore_monopile" / "ard_system.yaml"
-        )
-
+        path_ard_system = Path(__file__).parent / "inputs_onshore" / "ard_system.yaml"
         input_dict = load_yaml(path_ard_system)
 
         # get, validate, and load the windIO dict
@@ -39,12 +36,6 @@ class TestLCOE_OFB_stack:
 
     def test_model(self, subtests):
 
-        # set up the working/design variables
-        self.prob.set_val("spacing_primary", 7.0)
-        self.prob.set_val("spacing_secondary", 7.0)
-        self.prob.set_val("angle_orientation", 0.0)
-        self.prob.set_val("angle_skew", 0.0)
-
         # run the model
         self.prob.run_model()
 
@@ -53,7 +44,7 @@ class TestLCOE_OFB_stack:
             "AEP_val": float(self.prob.get_val("AEP_farm", units="GW*h")[0]),
             "CapEx_val": float(self.prob.get_val("tcc.tcc", units="MUSD")[0]),
             "BOS_val": float(
-                self.prob.get_val("orbit.installation_capex", units="MUSD")[0]
+                self.prob.get_val("landbosse.total_capex", units="MUSD")[0]
             ),
             "OpEx_val": float(self.prob.get_val("opex.opex", units="MUSD/yr")[0]),
             "LCOE_val": float(self.prob.get_val("financese.lcoe", units="USD/MW/h")[0]),
@@ -64,10 +55,10 @@ class TestLCOE_OFB_stack:
             test_data,
             Path(ard.__file__).parents[1]
             / "test"
-            / "system"
             / "ard"
+            / "system"
             / "api"
-            / "test_LCOE_OFB_stack_pyrite.npz",
+            / "test_LCOE_LB_stack_pyrite.npz",
             # rewrite=True,  # uncomment to write new pyrite file
             rtol_val=5e-3,
             load_only=True,
@@ -79,3 +70,6 @@ class TestLCOE_OFB_stack:
                 assert np.isclose(value, pyrite_data[key], rtol=5e-3), (
                     f"Mismatch for {key}: " f"expected {pyrite_data[key]}, got {value}"
                 )
+
+
+#
