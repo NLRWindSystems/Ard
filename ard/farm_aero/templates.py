@@ -329,7 +329,7 @@ class BatchFarmPowerTemplate(FarmAeroTemplate):
             units="W",
         )
 
-        if self.options["modeling_options"]["aero"]["return_turbine_output"]:
+        if self.options["modeling_options"].get("aero", {}).get("return_turbine_output"):
             self.add_output(
                 "power_turbines",
                 np.zeros((self.N_turbines, self.N_wind_conditions)),
@@ -365,7 +365,7 @@ class BatchFarmPowerTemplate(FarmAeroTemplate):
 
         # the following should be set
         outputs["power_farm"] = np.zeros((self.N_wind_conditions,))
-        if self.options["modeling_options"]["aero"]["return_turbine_output"]:
+        if self.options["modeling_options"].get("aero", {}).get("return_turbine_output"):
             outputs["power_turbines"] = np.zeros(
                 (self.N_turbines, self.N_wind_conditions)
             )
@@ -456,7 +456,7 @@ class FarmAEPTemplate(FarmAeroTemplate):
             np.zeros((self.N_wind_conditions,)),
             units="W",
         )
-        if self.options["modeling_options"]["aero"]["return_turbine_output"]:
+        if self.options["modeling_options"].get("aero", {}).get("return_turbine_output"):
             self.add_output(
                 "power_turbines",
                 np.zeros((self.N_turbines, self.N_wind_conditions)),
