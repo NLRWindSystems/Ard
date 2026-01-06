@@ -39,7 +39,8 @@ classifiers = [
 ]
 dependencies = [
   "numpy<2.3",
-  "floris>=4.3",
+  # "floris>=4.3",
+  "floris @ git+https://github.com/bayc/floris.git@feature/surrogate_loads",
   "wisdem>=3.21",
   "NLopt",
   "marmot-agents",
