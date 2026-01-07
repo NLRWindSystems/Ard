@@ -77,8 +77,18 @@ class EagleDensityFunction(om.ExplicitComponent):
 
     def setup_partials(self):
         """Setup the OpenMDAO component partial derivatives."""
-        self.declare_partials("eagle_normalized_density", "x_turbines", method="exact")
-        self.declare_partials("eagle_normalized_density", "y_turbines", method="exact")
+        self.declare_partials(
+            "eagle_normalized_density",
+            "x_turbines",
+            diagonal=True,
+            method="exact",
+        )
+        self.declare_partials(
+            "eagle_normalized_density",
+            "y_turbines",
+            diagonal=True,
+            method="exact",
+        )
 
     def compute(self, inputs, outputs):
         """
@@ -90,10 +100,9 @@ class EagleDensityFunction(om.ExplicitComponent):
         y_turbines = inputs["y_turbines"]  # m
 
         # evaluate the density function at each turbine point
-        outputs["eagle_normalized_density"] = [
-            self.eagle_density_function(xt, yt)
-            for xt, yt in zip(x_turbines, y_turbines)
-        ]
+        outputs["eagle_normalized_density"] = self.eagle_density_function.ev(
+            x_turbines, y_turbines
+        )
 
     def compute_partials(self, inputs, partials):
         """
@@ -107,5 +116,5 @@ class EagleDensityFunction(om.ExplicitComponent):
         # evaluate the gradients for each variable
         dfdx = self.eagle_density_function.ev(x_turbines, y_turbines, dx=1, dy=0)
         dfdy = self.eagle_density_function.ev(x_turbines, y_turbines, dx=0, dy=1)
-        partials["eagle_normalized_density", "x_turbines"] = np.diag(dfdx)
-        partials["eagle_normalized_density", "y_turbines"] = np.diag(dfdy)
+        partials["eagle_normalized_density", "x_turbines"] = dfdx
+        partials["eagle_normalized_density", "y_turbines"] = dfdy

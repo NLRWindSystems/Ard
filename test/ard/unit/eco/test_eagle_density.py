@@ -16,6 +16,12 @@ class TestEagleDensityFunction:
 
     def setup_method(self):
 
+        Rmax = 500.0  # m
+        R = lambda x, y: np.sqrt(x * x + y * y)
+        # if we wanted to add another dimension here
+        # we could add `THETA = lambda x, y: np.atan2(x, y)`
+        self.F = lambda x, y: -R(x, y) * R(x, y) / (Rmax * Rmax) + 2 * R(x, y) / Rmax
+
         # load input
         path_inputs = Path(__file__).parent.absolute() / "inputs"
         input_dict = load_yaml(path_inputs / "ard_system_eagle_density.yaml")
@@ -23,7 +29,7 @@ class TestEagleDensityFunction:
 
         # create the OpenMDAO model
         model = om.Group()
-        self.collection = model.add_subsystem(
+        model.add_subsystem(
             "eagle_density",
             EagleDensityFunction(modeling_options=modeling_options),
             promotes=["*"],
@@ -34,10 +40,7 @@ class TestEagleDensityFunction:
 
     def test_eagle_density(self, subtests):
 
-        Rmax = 500.0  # m
-        R = lambda x, y: np.sqrt(x * x + y * y)
-        # THETA = lambda x, y: np.atan2(x, y)
-        F = lambda x, y: -R(x, y) * R(x, y) / (Rmax * Rmax) + 2 * R(x, y) / Rmax
+        F = self.F  # extract the exact function
 
         # generated from casting random bytestreams to int
         seeds = [2005908367, 1273391448, 2557384174, 2195599068, 1604240584]
@@ -71,10 +74,7 @@ class TestEagleDensityFunction:
 
     def test_gradient_eagle_density(self, subtests):
 
-        Rmax = 500.0  # m
-        R = lambda x, y: np.sqrt(x * x + y * y)
-        # THETA = lambda x, y: np.atan2(x, y)
-        F = lambda x, y: -R(x, y) * R(x, y) / (Rmax * Rmax) + 2 * R(x, y) / Rmax
+        F = self.F  # extract the exact function
 
         # generated from casting random bytestreams to int
         seeds = [2005908367, 1273391448, 2557384174, 2195599068, 1604240584]
@@ -91,7 +91,6 @@ class TestEagleDensityFunction:
             y_turbines = rng.uniform(
                 -1000.0, 1000.0, self.modeling_options["layout"]["N_turbines"]
             )
-            F_turbines_reference = F(x_turbines, y_turbines)
 
             # set up the model to run
             self.prob.set_val("x_turbines", x_turbines, units="m")
