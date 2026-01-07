@@ -16,7 +16,7 @@ class TestEagleDensityFunction:
     def setup_method(self):
 
         # load input
-        path_inputs = Path.cwd().absolute() / "inputs"
+        path_inputs = Path(__file__).parent.absolute() / "inputs"
         input_dict = load_yaml(path_inputs / "ard_system_eagle_density.yaml")
         modeling_options = self.modeling_options = input_dict["modeling_options"]
 
