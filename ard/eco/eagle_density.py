@@ -22,10 +22,10 @@ class EagleDensityFunction(om.ExplicitComponent):
     Inputs
     ------
     x_turbines : np.ndarray
-        a 1-D numpy array that represents that x (i.e. Easting) coordinate of
+        a 1-D numpy array that represents the x (i.e. Easting) coordinate of
         the location of each of the turbines in the farm in meters
     y_turbines : np.ndarray
-        a 1-D numpy array that represents that y (i.e. Northing) coordinate of
+        a 1-D numpy array that represents the y (i.e. Northing) coordinate of
         the location of each of the turbines in the farm in meters
 
     Outputs
@@ -71,7 +71,7 @@ class EagleDensityFunction(om.ExplicitComponent):
         self.add_output(
             "eagle_normalized_density",
             np.zeros((self.N_turbines,)),
-            units="unitless",
+            units=None,
             desc="normalized eagle presence density",
         )
 

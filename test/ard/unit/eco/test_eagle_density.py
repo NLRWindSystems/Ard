@@ -32,7 +32,7 @@ class TestEagleDensityFunction:
         self.prob = om.Problem(model)
         self.prob.setup()
 
-    def test_eagledensity(self, subtests):
+    def test_eagle_density(self, subtests):
 
         Rmax = 500.0  # m
         R = lambda x, y: np.sqrt(x * x + y * y)
@@ -69,7 +69,7 @@ class TestEagleDensityFunction:
                     atol=5.0e-2,
                 )
 
-    def test_gradient_eagledensity(self, subtests):
+    def test_gradient_eagle_density(self, subtests):
 
         Rmax = 500.0  # m
         R = lambda x, y: np.sqrt(x * x + y * y)

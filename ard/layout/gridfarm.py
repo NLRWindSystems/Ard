@@ -91,8 +91,8 @@ class GridFarmLayout(templates.LayoutTemplate):
         angle_skew = self.modeling_options["layout"]["angle_skew"]
 
         # add four-parameter grid farm layout DVs
-        self.add_input("spacing_primary", spacing_primary, units="unitless")
-        self.add_input("spacing_secondary", spacing_secondary, units="unitless")
+        self.add_input("spacing_primary", spacing_primary, units=None)
+        self.add_input("spacing_secondary", spacing_secondary, units=None)
         self.add_input("angle_orientation", angle_orientation, units="deg")
         self.add_input("angle_skew", angle_skew, units="deg")
 
@@ -227,13 +227,13 @@ class GridFarmLanduse(templates.LanduseTemplate):
         self.add_input(
             "spacing_primary",
             self.modeling_options["layout"]["spacing_primary"],
-            units="unitless",
+            units=None,
             desc="turbine row spacing in rotor diameters",
         )
         self.add_input(
             "spacing_secondary",
             self.modeling_options["layout"]["spacing_secondary"],
-            units="unitless",
+            units=None,
             desc="turbine column spacing (along rows) in rotor diameters",
         )
         self.add_input(
