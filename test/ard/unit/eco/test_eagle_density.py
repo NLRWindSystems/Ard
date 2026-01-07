@@ -74,7 +74,6 @@ class TestEagleDensityFunction:
 
     def test_gradient_eagle_density(self, subtests):
 
-        F = self.F  # extract the exact function
 
         # generated from casting random bytestreams to int
         seeds = [2005908367, 1273391448, 2557384174, 2195599068, 1604240584]

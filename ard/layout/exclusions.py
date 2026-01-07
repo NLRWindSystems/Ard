@@ -25,6 +25,12 @@ class FarmExclusionDistancePolygon(om.ExplicitComponent):
     y_turbines : np.ndarray
         a 1D numpy array indicating the y-dimension locations of the turbines,
         with length `N_turbines` (mirrored w.r.t. `FarmAeroTemplate`)
+
+    Outputs
+    -------
+    exclusion_distances : np.ndarray
+        a 1D array of distances (in meters) from each turbine to its assigned
+        polygonal exclusion region
     """
 
     def initialize(self):
@@ -87,7 +93,7 @@ class FarmExclusionDistancePolygon(om.ExplicitComponent):
 
     def setup_partials(self):
         """Derivative setup for the OpenMDAO component."""
-        # the default (but not preferred!) derivatives are FDM
+        # override the OpenMDAO default FDM derivatives by declaring exact derivatives
         self.declare_partials(
             "*",
             "*",
