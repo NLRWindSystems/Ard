@@ -49,7 +49,7 @@ class FarmExclusionDistancePolygon(om.ExplicitComponent):
                 "The circular exclusions from windIO have not been implemented here, yet."
             )
         if "polygons" not in self.windIO["site"]["exclusions"]:
-            raise KeyError(
+            raise NotImplementedError(
                 "Currently only polygon exclusions from windIO have been implemented and none were found."
             )
         self.exclusion_vertices = [
