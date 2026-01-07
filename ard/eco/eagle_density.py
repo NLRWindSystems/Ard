@@ -44,7 +44,7 @@ class EagleDensityFunction(om.ExplicitComponent):
 
         # load modeling options and turbine count
         modeling_options = self.modeling_options = self.options["modeling_options"]
-        self.windIO = self.modeling_options["windIO_plant"]
+
         self.N_turbines = modeling_options["layout"]["N_turbines"]
 
         # grab the eagle presence density settings
