@@ -6,9 +6,12 @@ import openmdao.api as om
 
 class EagleDensityFunction(om.ExplicitComponent):
     """
-    _summary_
+    OpenMDAO component to evaluate eagle presence density at turbine locations.
 
-    _extended_summary_
+    An Ard/OpenMDAO component that evaluates the SRSS-generated eagle presence
+    density at turbine locations, nominally for analysis of and optimization
+    with respect to the likelihood of eagle interactions at the turbine
+    locations.
 
     Options
     -------
@@ -27,10 +30,9 @@ class EagleDensityFunction(om.ExplicitComponent):
 
     Outputs
     -------
-    area_tight : float
-        the area in square kilometers that the farm occupies based on the
-        circumscribing geometry with a specified (default zero) layback buffer
-        (inherited from `templates.LayoutTemplate`)
+    eagle_normalized_density : np.ndarray
+        a 1-D numpy array that represents the normalized eagle presence density
+        at each of the turbine locations (unitless)
     """
 
     def initialize(self):
@@ -73,15 +75,37 @@ class EagleDensityFunction(om.ExplicitComponent):
             desc="normalized eagle presence density",
         )
 
+    def setup_partials(self):
+        """Setup the OpenMDAO component partial derivatives."""
+        self.declare_partials("eagle_normalized_density", "x_turbines", method="exact")
+        self.declare_partials("eagle_normalized_density", "y_turbines", method="exact")
+
     def compute(self, inputs, outputs):
         """
         Computation for the OM component.
         """
 
+        # unpack the turbine locations
         x_turbines = inputs["x_turbines"]  # m
         y_turbines = inputs["y_turbines"]  # m
 
+        # evaluate the density function at each turbine point
         outputs["eagle_normalized_density"] = [
             self.eagle_density_function(xt, yt)
             for xt, yt in zip(x_turbines, y_turbines)
         ]
+
+    def compute_partials(self, inputs, partials):
+        """
+        Compute the partials for the OM component
+        """
+
+        # unpack the turbine locations
+        x_turbines = inputs["x_turbines"]  # m
+        y_turbines = inputs["y_turbines"]  # m
+
+        # evaluate the gradients for each variable
+        dfdx = self.eagle_density_function.ev(x_turbines, y_turbines, dx=1, dy=0)
+        dfdy = self.eagle_density_function.ev(x_turbines, y_turbines, dx=0, dy=1)
+        partials["eagle_normalized_density", "x_turbines"] = np.diag(dfdx)
+        partials["eagle_normalized_density", "y_turbines"] = np.diag(dfdy)
