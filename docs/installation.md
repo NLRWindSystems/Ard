@@ -10,7 +10,7 @@
 ### 1. Clone Ard source repository
 If installing from PyPI, skip to [step 2.](#2.-Set-up-environment). If installing from source, the source can be cloned from github using the following command in your preferred location:
 ```shell
-git clone git@github.com:WISDEM/Ard.git
+git clone git@github.com:NLRWindSystems/Ard.git
 ```
 Once downloaded, you can enter the `Ard` root directory using
 ```shell

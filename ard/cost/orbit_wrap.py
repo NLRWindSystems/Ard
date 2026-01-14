@@ -201,7 +201,7 @@ class ORBITDetail(orbit_wisdem.Orbit):
     array layout, and 2) traps warning messages that are recognized not to be
     issues.
 
-    See: https://github.com/WISDEM/ORBIT
+    See: https://github.com/NLRWindSystems/ORBIT
     """
 
     def initialize(self):

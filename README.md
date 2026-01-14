@@ -1,7 +1,7 @@
 
 # Ard
 
-[![CI/CD test suite](https://github.com/WISDEM/Ard/actions/workflows/python-tests-consolidated.yaml/badge.svg?branch=main)](https://github.com/WISDEM/Ard/actions/workflows/python-tests-consolidated.yaml)
+[![CI/CD test suite](https://github.com/NLRWindSystems/Ard/actions/workflows/python-tests-consolidated.yaml/badge.svg?branch=main)](https://github.com/NLRWindSystems/Ard/actions/workflows/python-tests-consolidated.yaml)
 
 ![Ard logo](assets/logomaker/logo.png)
 
@@ -35,7 +35,7 @@ Ard documentation is available at [https://wisdem.github.io/Ard](https://wisdem.
 
 If installing from PyPI, skip to [step 2.](#2.-Set-up-environment). If installing from source, the source can be cloned from github using the following command in your preferred location:
 ```shell
-git clone git@github.com:WISDEM/Ard.git
+git clone git@github.com:NLRWindSystems/Ard.git
 ```
 Once downloaded, you can enter the `Ard` root directory using
 ```shell
@@ -111,7 +111,7 @@ source test/run_local_test_system.sh
 These enable the generation of HTML-based coverage reports by default and can be used to track "coverage", or the percentage of software lines of code that are run by the testing systems.
 `Ard`'s git repository includes requirements for both the `main` and `develop` branches to have 80% coverage on unit testing and 50% testing in system testing, which are, respectively, tests of individual parts of `Ard` and "systems" composed of multiple parts.
 Failures are not tolerated in code that is merged onto these branches and code found therein *should* never cause a testing failure if it has been found there.
-If the process of installation and testing fails, please open a new issue [here](https://github.com/WISDEM/Ard/issues).
+If the process of installation and testing fails, please open a new issue [here](https://github.com/NLRWindSystems/Ard/issues).
 
 ## Design philosophy
 
@@ -151,7 +151,7 @@ The components that achieve this can be assembled to either run a single top-dow
 # Contributing to `Ard`
 
 We have striven towards best-practices documentation and testing for `Ard`.
-Contribution is welcome, and we are happy [to field pull requests from github](https://github.com/WISDEM/Ard/pulls).
+Contribution is welcome, and we are happy [to field pull requests from github](https://github.com/NLRWindSystems/Ard/pulls).
 For acceptance, PRs must:
 - be formatted using [`black`](https://github.com/psf/black)
 - not fail any unit tests or system tests
