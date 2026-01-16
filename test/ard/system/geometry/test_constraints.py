@@ -116,7 +116,7 @@ class TestConstraints:
 
     def test_constraint_optimization(self, subtests):
         """test boundary-constrained optimization distances (yes derivatives)"""
-        #TODO I think this test is not formulated correctly
+        # TODO I think this test is not formulated correctly
         # setup the working/design variables
         self.prob.model.add_design_var("spacing_target", lower=2.0, upper=13.0)
         self.prob.model.add_constraint("boundary_distances", upper=0.0)

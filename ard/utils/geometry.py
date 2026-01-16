@@ -69,10 +69,12 @@ def get_nearest_polygons(
 
     return region
 
+
 # Pad all polygons to have the same number of vertices
 def pad_polygon(polygon, max_vertices):
     padding = max_vertices - len(polygon)
     return jnp.pad(polygon, ((0, padding), (0, 0)), mode="edge")
+
 
 def distance_multi_point_to_multi_polygon_ray_casting(
     points_x: np.ndarray[float],
@@ -105,8 +107,10 @@ def distance_multi_point_to_multi_polygon_ray_casting(
     points = jnp.stack([points_x, points_y], axis=1)
 
     # Convert boundary_vertices to JAX arrays
-    boundary_vertices_jax = [jnp.asarray(poly, dtype=jnp.float32) for poly in boundary_vertices]
-    
+    boundary_vertices_jax = [
+        jnp.asarray(poly, dtype=jnp.float32) for poly in boundary_vertices
+    ]
+
     # Create a function for each polygon that computes distance
     def make_distance_func(vertices):
         def compute_for_polygon(point):
@@ -117,15 +121,18 @@ def distance_multi_point_to_multi_polygon_ray_casting(
                 shift=tol,
                 return_distance=True,
             )
+
         return compute_for_polygon
-    
+
     # Create list of functions, one per polygon
-    distance_funcs = [make_distance_func(vertices) for vertices in boundary_vertices_jax]
-    
+    distance_funcs = [
+        make_distance_func(vertices) for vertices in boundary_vertices_jax
+    ]
+
     # Define function to compute distance using jax.lax.switch
     def compute_distance(point, region_idx):
         return jax.lax.switch(region_idx, distance_funcs, point)
-    
+
     # Vectorize over all points
     distances = jax.vmap(compute_distance)(points, regions)
 
@@ -136,25 +143,26 @@ distance_multi_point_to_multi_polygon_ray_casting = jax.jit(
     distance_multi_point_to_multi_polygon_ray_casting
 )
 
+
 # Define a function to process a single edge
 def process_edge(
-    edge_start: jnp.ndarray, 
-    edge_end: jnp.ndarray, 
-    point: jnp.ndarray, 
+    edge_start: jnp.ndarray,
+    edge_end: jnp.ndarray,
+    point: jnp.ndarray,
     shift: float,
 ):
     """
     Process a single polygon edge for ray-casting algorithm.
-    
+
     Determines if a vertical ray cast from the point up intersects
     the edge, and calculates the distance from the point to the edge segment.
-    
+
     Args:
         edge_start (jnp.ndarray): Start vertex of the edge ([x, y]).
         edge_end (jnp.ndarray): End vertex of the edge ([x, y]).
         point (jnp.ndarray): Point of interest ([x, y]).
         shift (float): Small value added to avoid division by zero when edge is vertical.
-    
+
     Returns:
         tuple: A tuple containing:
             - is_below (bool): True if point is below the edge at the ray intersection.
@@ -162,12 +170,18 @@ def process_edge(
             - vertex_crossing (int): 1 if ray crosses exactly at edge_start vertex, 0 otherwise.
     """
 
-    # Check if the x-coordinate of the point is between the x-coordinates of the edge, 
+    # Check if the x-coordinate of the point is between the x-coordinates of the edge,
     # including when the point is directly below a vertical edge
-    x_condition = ((edge_start[0] <= point[0]) & (point[0] < edge_end[0])) | (
-                   (edge_start[0] >= point[0]) & (point[0] > edge_end[0])) | (
-                   (jnp.isclose(edge_start[0], edge_end[0]) & jnp.isclose(point[0], edge_start[0]))
-                   )
+    x_condition = (
+        ((edge_start[0] <= point[0]) & (point[0] < edge_end[0]))
+        | ((edge_start[0] >= point[0]) & (point[0] > edge_end[0]))
+        | (
+            (
+                jnp.isclose(edge_start[0], edge_end[0])
+                & jnp.isclose(point[0], edge_start[0])
+            )
+        )
+    )
 
     # Calculate the y-coordinate of the edge at the x-coordinate of the point
     y = ((edge_end[1] - edge_start[1]) / (edge_end[0] - edge_start[0] + shift)) * (
@@ -179,9 +193,7 @@ def process_edge(
 
     # record vertex crossings
     vertex_crossing = jnp.where(
-        x_condition & (edge_start[0] == point[0]) & is_below,
-        1,
-        0
+        x_condition & (edge_start[0] == point[0]) & is_below, 1, 0
     )
 
     # Calculate the distance to the edge
@@ -189,8 +201,10 @@ def process_edge(
 
     return is_below, distance, vertex_crossing
 
+
 # Vectorize the edge processing function
 process_edge_vec = jax.vmap(process_edge, in_axes=(0, 0, None, None))
+
 
 def distance_point_to_polygon_ray_casting(
     point: jnp.ndarray,
@@ -221,7 +235,7 @@ def distance_point_to_polygon_ray_casting(
     Returns:
         float: Signed distance or inside/outside status. Negative if inside, positive if outside.
     """
-    
+
     # Ensure inputs are JAX arrays with explicit data types
     point = jnp.asarray(point, dtype=jnp.float32)
     vertices = jnp.asarray(vertices, dtype=jnp.float32)
@@ -231,17 +245,19 @@ def distance_point_to_polygon_ray_casting(
 
     edge_starts = vertices[:-1]
     edge_ends = vertices[1:]
-    is_below, distances, vertex_crossings = process_edge_vec(edge_starts, edge_ends, point, shift)
+    is_below, distances, vertex_crossings = process_edge_vec(
+        edge_starts, edge_ends, point, shift
+    )
 
     # Check for tangential vertex crossings
     # Create arrays of current and previous edge differences
     curr_edge_end_diff = edge_ends[:, 0] - point[0]
-    prev_edge_start_diff = jnp.roll(edge_starts[:, 0], 1) - point[0]  # Shift by 1 to get previous
+    prev_edge_start_diff = (
+        jnp.roll(edge_starts[:, 0], 1) - point[0]
+    )  # Shift by 1 to get previous
     # Tangential crossing occurs when vertex_crossing > 0 AND the other two connected vertices are on same side
     tangential_vertex_crossings = jnp.where(
-        (vertex_crossings > 0) & (curr_edge_end_diff * prev_edge_start_diff > 0),
-        1,
-        0
+        (vertex_crossings > 0) & (curr_edge_end_diff * prev_edge_start_diff > 0), 1, 0
     )
 
     # Count the number of intersections, ignoring tangential vertex crossings
@@ -254,12 +270,12 @@ def distance_point_to_polygon_ray_casting(
         c_prime = 1
 
     c = jax.lax.cond(
-            intersection_counter % 2 == 1,
-            lambda _: -c_prime,
-            lambda _: c_prime,
-            operand=None,
-        )
-    
+        intersection_counter % 2 == 1,
+        lambda _: -c_prime,
+        lambda _: c_prime,
+        operand=None,
+    )
+
     return c
 
 
