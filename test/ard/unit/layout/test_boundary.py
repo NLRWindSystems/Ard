@@ -293,7 +293,8 @@ class TestFarmBoundaryDistancePolygon:
 
     def test_offset_triangle_distance(self):
         """make sure boundaries not on the origin are working"""
-
+        bx = [0.0, 800.0, 0.0]
+        by = [1000.0, 1000.0, 200.0]
         # set modeling options
         modeling_options_single = {
             "windIO_plant": {
@@ -303,8 +304,8 @@ class TestFarmBoundaryDistancePolygon:
                     "boundaries": {
                         "polygons": [
                             {
-                                "x": [0.0, 800.0, 0.0],
-                                "y": [1000.0, 1000.0, 200.0],
+                                "x": bx,
+                                "y": by,
                                 # "y": [200.0, 1000.0, 1000.0],
                             },
                         ]
@@ -338,17 +339,82 @@ class TestFarmBoundaryDistancePolygon:
 
         prob_single.run_model()
 
-        expected_distances = -np.array(  # minus sign on the data from exclusion
+        expected_distances = np.array(
             [
-                -200.000000000000,  # 0
-                -424.2640687119286,  # 1
-                -707.1067811865476,  # 2
+                200.000000000000,  # 0
+                424.2640687119286,  # 1
+                707.1067811865476,  # 2
                 0.000000000000,  # 3
-                -141.4213562373095,  # 4
-                -424.2640687119286,  # 5
+                141.4213562373095,  # 4
+                424.2640687119286,  # 5
                 0.000000000000,  # 6
-                141.4213562373095,  # 7
-                -141.4213562373095,  # 8
+                -141.4213562373095,  # 7
+                141.4213562373095,  # 8
+            ]
+        )
+
+        assert np.allclose(
+            prob_single["boundary_distances"], expected_distances, atol=1e-3
+        )
+
+    def test_offset_triangle_distance_left(self):
+        """make sure boundaries not on the origin are working"""
+        bx = [800.0, 0.0, 800.0]
+        by = [1000.0, 1000.0, 200.0]
+        # set modeling options
+        modeling_options_single = {
+            "windIO_plant": {
+                "name": "unit test dummy",
+                "site": {
+                    "name": "unit test site",
+                    "boundaries": {
+                        "polygons": [
+                            {
+                                "x": bx,
+                                "y": by,
+                            },
+                        ]
+                    },
+                },
+                "wind_farm": {
+                    "turbine": {
+                        "rotor_diameter": self.D_rotor,
+                    }
+                },
+            },
+            "layout": {
+                "N_turbines": self.N_turbines,
+            },
+        }
+
+        # set up openmdao problem
+        model_single = om.Group()
+        model_single.add_subsystem(
+            "boundary",
+            boundary.FarmBoundaryDistancePolygon(
+                modeling_options=modeling_options_single,
+            ),
+            promotes=["*"],
+        )
+        prob_single = om.Problem(model_single)
+        prob_single.setup()
+
+        prob_single.set_val("x_turbines", self.x_turbines)
+        prob_single.set_val("y_turbines", self.y_turbines)
+
+        prob_single.run_model()
+
+        expected_distances = np.array(  # minus sign on the data from exclusion
+            [
+                707.1067811865476,  # 0
+                424.2640687119286,  # 1
+                200.0,  # 2
+                424.2640687119286,  # 3
+                141.4213562373095,  # 4
+                0.0,  # 5
+                141.4213562373095,  # 6
+                -141.4213562373095,  # 7
+                0.0,  # 8
             ]
         )
 
@@ -380,6 +446,12 @@ class TestFarmBoundaryDistancePolygon:
         region_assignments = np.ones(self.N_turbines, dtype=int)
         region_assignments[0:3] = 0
 
+        bx1 = boundary_vertices_0[:, 0].tolist()
+        by1 = boundary_vertices_0[:, 1].tolist()
+
+        bx2 = boundary_vertices_1[:, 0].tolist()
+        by2 = boundary_vertices_1[:, 1].tolist()
+
         # set modeling options
         modeling_options_multi = {
             "windIO_plant": {
@@ -389,12 +461,12 @@ class TestFarmBoundaryDistancePolygon:
                     "boundaries": {
                         "polygons": [
                             {
-                                "x": boundary_vertices_0[:, 0].tolist(),
-                                "y": boundary_vertices_0[:, 1].tolist(),
+                                "x": bx1,
+                                "y": by1,
                             },
                             {
-                                "x": boundary_vertices_1[:, 0].tolist(),
-                                "y": boundary_vertices_1[:, 1].tolist(),
+                                "x": bx2,
+                                "y": by2,
                             },
                         ]
                     },

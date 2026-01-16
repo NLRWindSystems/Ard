@@ -3,6 +3,52 @@ import jax.test_util
 import ard.utils.geometry as geo_utils
 import pytest
 
+@pytest.mark.usefixtures("subtests")
+class TestPadPolygon:
+
+    def test_zero_vertex(self, subtests):
+        boundary_vertices = [
+            np.array([
+                [   0.,    0.],
+                [1000.,    0.],
+                [1000.,  200.],
+                [   0.,  200.]
+            ]), 
+            np.array([
+                [   0.,  300.],
+                [1000.,  300.],
+                [1000., 1000.],
+                [1100., 1100.],
+                [   0., 1100.]
+            ])
+        ]
+
+        padded_expected_vertices = [
+            np.array([
+                [   0.,    0.],
+                [1000.,    0.],
+                [1000.,  200.],
+                [   0.,  200.],
+                [0.0, 200.0]
+            ]), 
+            np.array([
+                [   0.,  300.],
+                [1000.,  300.],
+                [1000., 1000.],
+                [1100., 1100.],
+                [   0., 1100.]
+            ])
+        ]
+
+        max_vertices = max(len(polygon) for polygon in boundary_vertices)
+
+        with subtests.test("boundary 0"):
+            paded_polygon = geo_utils.pad_polygon(boundary_vertices[0], max_vertices)
+            assert np.allclose(paded_polygon, padded_expected_vertices[0])
+
+        with subtests.test("boundary 1"):
+            paded_polygon = geo_utils.pad_polygon(boundary_vertices[1], max_vertices)
+            assert np.allclose(paded_polygon, padded_expected_vertices[1])
 
 @pytest.mark.usefixtures("subtests")
 class TestGetNearestPolygons:
@@ -219,6 +265,76 @@ class TestDistancePointToPolygonRayCasting:
                     point, vertices=polygon
                 )
                 assert test_result == pytest.approx(expected_distance)
+
+    def test_process_edge_multiple(self, subtests):
+
+        polygon = np.array([[0.0, 0.2], [0.8, 1.0], [0.0, 1.0]])
+        point = np.array([0.8, 0.8])
+        expected_below = [False, False, True]
+
+        for idx_end_point, end_point in enumerate(polygon):
+            
+            with subtests.test(f"end point {idx_end_point}"):
+                start_point = polygon[idx_end_point-1]
+                is_below, distance, vertex_crossing = geo_utils.process_edge(
+                    edge_start=start_point, edge_end=end_point, point=point, shift=1E-10
+                )
+                assert is_below == expected_below[idx_end_point]
+
+    def test_process_edge_multiple_above(self, subtests):
+
+        polygon = np.array([[0.8, 1.0], [0.0, 0.2], [0.8, 0.2]])
+        point = np.array([0.0, 0.8])
+        expected_below = [False, False, False]
+        
+        for idx_end_point, end_point in enumerate(polygon):
+            
+            with subtests.test(f"end point {idx_end_point}"):
+                start_point = polygon[idx_end_point-1]
+                is_below, distance, vertex_crossing = geo_utils.process_edge(
+                    edge_start=start_point, edge_end=end_point, point=point, shift=1E-10
+                )
+                assert is_below == expected_below[idx_end_point]
+
+        for idx_end_point, end_point in enumerate(polygon):
+            
+            with subtests.test(f"end point {idx_end_point}"):
+                start_point = polygon[idx_end_point-1]
+                is_below, distance, vertex_crossing = geo_utils.process_edge(
+                    edge_start=start_point, edge_end=end_point, point=point, shift=1E-10
+                )
+                assert vertex_crossing == 0.0
+
+    
+    def test_process_edge_single(self, subtests):
+
+        line = np.array([[0.8, 1.0], [0.0, 1.0]])
+        point = np.array([0.8, 0.8])
+
+        is_below, distance, vertex_crossing = geo_utils.process_edge(
+            edge_start=line[0], edge_end=line[1], point=point, shift=1E-10
+        )
+        with subtests.test(f"test below edge"):
+            assert is_below == True
+        with subtests.test(f"test vertex crossing"):
+            assert vertex_crossing == True
+        with subtests.test(f"test distance"):
+            assert distance == pytest.approx(0.2, rel=1E-7)
+
+    def test_process_edge_single_colinear(self, subtests):
+
+        line = np.array([[0.8, 1.0], [0.0, 1.0]])
+        point = np.array([0.4, 1.0])
+
+        is_below, distance, vertex_crossing = geo_utils.process_edge(
+            edge_start=line[0], edge_end=line[1], point=point, shift=1E-10
+        )
+        with subtests.test(f"test below edge"):
+            assert is_below == False
+        with subtests.test(f"test vertex crossing"):
+            assert vertex_crossing == 0
+        with subtests.test(f"test distance"):
+            assert distance == pytest.approx(0.0, rel=1E-7)
 
     def test_distance_point_to_unitsquare_center(self):
 

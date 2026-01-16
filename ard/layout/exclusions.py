@@ -111,7 +111,7 @@ class FarmExclusionDistancePolygon(om.ExplicitComponent):
                 regions=self.exclusion_regions,
             )
         )
-
+        
         outputs["exclusion_distances"] = -exclusion_distances
 
     def compute_partials(self, inputs, partials, discrete_inputs=None):
