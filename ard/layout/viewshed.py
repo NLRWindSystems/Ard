@@ -5,7 +5,6 @@ from shapely.ops import unary_union
 
 import openmdao.api as om
 
-
 _R_earth = 6371008.8  # Earth radius, m
 
 

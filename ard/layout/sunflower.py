@@ -4,7 +4,6 @@ import scipy.spatial
 import ard.layout.templates as templates
 import ard.layout.fullfarm as fullfarm
 
-
 phi_golden = (1 + np.sqrt(5)) / 2  # golden ratio
 
 
