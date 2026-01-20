@@ -108,7 +108,7 @@ class EagleDensityFunction(om.ExplicitComponent):
 
         # evaluate the density function at each turbine point
         outputs["eagle_normalized_density"] = self.eagle_density_function(
-            x_turbines, y_turbines
+            x_turbines, y_turbines, grid=False,
         )
 
     def compute_partials(self, inputs, partials):
@@ -121,7 +121,7 @@ class EagleDensityFunction(om.ExplicitComponent):
         y_turbines = inputs["y_turbines"]  # m
 
         # evaluate the gradients for each variable
-        dfdx = self.eagle_density_function_dx(x_turbines, y_turbines)
-        dfdy = self.eagle_density_function_dy(x_turbines, y_turbines)
+        dfdx = self.eagle_density_function_dx(x_turbines, y_turbines, grid=False)
+        dfdy = self.eagle_density_function_dy(x_turbines, y_turbines, grid=False)
         partials["eagle_normalized_density", "x_turbines"] = dfdx
         partials["eagle_normalized_density", "y_turbines"] = dfdy
