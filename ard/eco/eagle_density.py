@@ -53,8 +53,12 @@ class EagleDensityFunction(om.ExplicitComponent):
         self.eagle_density_function = RectBivariateSpline(
             self.pres["x"], self.pres["y"], self.pres["normalized_presence_density"]
         )
-        self.eagle_density_function_dx = self.eagle_density_function.partial_derivative(dx=1, dy=0)
-        self.eagle_density_function_dy = self.eagle_density_function.partial_derivative(dx=0, dy=1)
+        self.eagle_density_function_dx = self.eagle_density_function.partial_derivative(
+            dx=1, dy=0
+        )
+        self.eagle_density_function_dy = self.eagle_density_function.partial_derivative(
+            dx=0, dy=1
+        )
 
         # add the full layout inputs
         self.add_input(
