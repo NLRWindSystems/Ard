@@ -48,7 +48,7 @@ class EagleDensityFunction(om.ExplicitComponent):
         self.N_turbines = modeling_options["layout"]["N_turbines"]
 
         # grab the eagle presence density settings
-        self.pres = self.modeling_options["ssrs"]["presence_density_map"]
+        self.pres = self.modeling_options["eco"]["eagle_presence_density_map"]
         self.eagle_density_function = RectBivariateSpline(
             self.pres["x"], self.pres["y"], self.pres["normalized_presence_density"]
         )
