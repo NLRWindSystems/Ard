@@ -8,10 +8,11 @@ class EagleDensityFunction(om.ExplicitComponent):
     """
     OpenMDAO component to evaluate eagle presence density at turbine locations.
 
-    An Ard/OpenMDAO component that evaluates the SRSS-generated eagle presence
-    density at turbine locations, nominally for analysis of and optimization
-    with respect to the likelihood of eagle interactions at the turbine
-    locations.
+    An Ard/OpenMDAO component that evaluates the eagle presence density metric
+    calculated by the National Laboratory of the Rockies's Stochastic Soaring
+    Raptor Simulator (SSRS) at the turbine locations. The eagle presence density
+    is an output of an SSRS simulation indicating the unit density function of
+    a raptor flying through the point during a given migratory period.
 
     Options
     -------
@@ -52,6 +53,8 @@ class EagleDensityFunction(om.ExplicitComponent):
         self.eagle_density_function = RectBivariateSpline(
             self.pres["x"], self.pres["y"], self.pres["normalized_presence_density"]
         )
+        self.eagle_density_function_dx = self.eagle_density_function.partial_derivative(dx=1, dy=0)
+        self.eagle_density_function_dy = self.eagle_density_function.partial_derivative(dx=0, dy=1)
 
         # add the full layout inputs
         self.add_input(
@@ -100,7 +103,7 @@ class EagleDensityFunction(om.ExplicitComponent):
         y_turbines = inputs["y_turbines"]  # m
 
         # evaluate the density function at each turbine point
-        outputs["eagle_normalized_density"] = self.eagle_density_function.ev(
+        outputs["eagle_normalized_density"] = self.eagle_density_function(
             x_turbines, y_turbines
         )
 
@@ -114,7 +117,7 @@ class EagleDensityFunction(om.ExplicitComponent):
         y_turbines = inputs["y_turbines"]  # m
 
         # evaluate the gradients for each variable
-        dfdx = self.eagle_density_function.ev(x_turbines, y_turbines, dx=1, dy=0)
-        dfdy = self.eagle_density_function.ev(x_turbines, y_turbines, dx=0, dy=1)
+        dfdx = self.eagle_density_function_dx(x_turbines, y_turbines)
+        dfdy = self.eagle_density_function_dy(x_turbines, y_turbines)
         partials["eagle_normalized_density", "x_turbines"] = dfdx
         partials["eagle_normalized_density", "y_turbines"] = dfdy
