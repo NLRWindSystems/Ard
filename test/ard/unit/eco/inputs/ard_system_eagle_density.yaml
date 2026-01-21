@@ -1,0 +1,6 @@
+modeling_options: &modeling_options
+  windIO_plant:
+  layout:
+    N_turbines: 9
+  eco:
+    eagle_presence_density_map: !include presence_density.yaml

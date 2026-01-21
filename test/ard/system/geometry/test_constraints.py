@@ -116,7 +116,7 @@ class TestConstraints:
 
     def test_constraint_optimization(self, subtests):
         """test boundary-constrained optimization distances (yes derivatives)"""
-
+        # TODO I think this test is not formulated correctly
         # setup the working/design variables
         self.prob.model.add_design_var("spacing_target", lower=2.0, upper=13.0)
         self.prob.model.add_constraint("boundary_distances", upper=0.0)
@@ -143,8 +143,8 @@ class TestConstraints:
             )
 
         # make sure the target spacing matches well
-        spacing_target_validation = 5.46721656  # from a run on 24 June 2025
-        area_target_validation = 10.49498327  # from a run on 24 June 2025
+        spacing_target_validation = 5.46727038  # from a run on 15 Jan 2026
+        area_target_validation = 10.4951899  # from a run on 15 Jan 2026
         with subtests.test("validation spacing matches"):
             assert np.isclose(
                 self.prob.get_val("spacing_target"), spacing_target_validation

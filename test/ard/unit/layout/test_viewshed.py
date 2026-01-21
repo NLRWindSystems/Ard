@@ -2,7 +2,6 @@ import pytest
 import numpy as np
 from ard.layout import viewshed
 
-
 ## HELPER FUNCTION TESTING
 
 

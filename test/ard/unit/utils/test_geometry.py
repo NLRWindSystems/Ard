@@ -5,6 +5,49 @@ import pytest
 
 
 @pytest.mark.usefixtures("subtests")
+class TestPadPolygon:
+
+    def test_zero_vertex(self, subtests):
+        boundary_vertices = [
+            np.array([[0.0, 0.0], [1000.0, 0.0], [1000.0, 200.0], [0.0, 200.0]]),
+            np.array(
+                [
+                    [0.0, 300.0],
+                    [1000.0, 300.0],
+                    [1000.0, 1000.0],
+                    [1100.0, 1100.0],
+                    [0.0, 1100.0],
+                ]
+            ),
+        ]
+
+        padded_expected_vertices = [
+            np.array(
+                [[0.0, 0.0], [1000.0, 0.0], [1000.0, 200.0], [0.0, 200.0], [0.0, 200.0]]
+            ),
+            np.array(
+                [
+                    [0.0, 300.0],
+                    [1000.0, 300.0],
+                    [1000.0, 1000.0],
+                    [1100.0, 1100.0],
+                    [0.0, 1100.0],
+                ]
+            ),
+        ]
+
+        max_vertices = max(len(polygon) for polygon in boundary_vertices)
+
+        with subtests.test("boundary 0"):
+            paded_polygon = geo_utils.pad_polygon(boundary_vertices[0], max_vertices)
+            assert np.allclose(paded_polygon, padded_expected_vertices[0])
+
+        with subtests.test("boundary 1"):
+            paded_polygon = geo_utils.pad_polygon(boundary_vertices[1], max_vertices)
+            assert np.allclose(paded_polygon, padded_expected_vertices[1])
+
+
+@pytest.mark.usefixtures("subtests")
 class TestGetNearestPolygons:
     """
     Test for get_nearest_polygons function
@@ -55,7 +98,9 @@ class TestDistancePointToMultiPolygonRayCasting:
         )
         pass
 
-    def test_distance_multi_point_to_multi_polygon_inside_outside_single_region(self):
+    def test_distance_multi_point_to_multi_polygon_inside_outside_single_square_region(
+        self,
+    ):
 
         points = np.array([[0.25, 0.5], [1.5, 0.5]])
         polygons = np.array([[0, 0], [1, 0], [1, 1], [0, 1]])
@@ -67,6 +112,44 @@ class TestDistancePointToMultiPolygonRayCasting:
             points_x=points[:, 0],
             points_y=points[:, 1],
             regions=np.array([0, 0]),
+        )
+
+        assert np.allclose(test_result, expected_distance)
+
+    def test_distance_multi_point_to_multi_polygon_inside_outside_single_offsettriangle_region(
+        self,
+    ):
+
+        points = np.array(
+            [
+                [0.2, 0.6],
+                [0.6, 0.2],
+                [0.4, 0.8],
+                [0.8, 0.8],
+            ]
+        )
+        polygons = [
+            np.array(
+                [
+                    [0.0, 0.2],
+                    [0.8, 1.0],
+                    [0.0, 1.0],
+                ]
+            )
+        ]
+
+        expected_distance = [
+            -0.1 * np.sqrt(2),
+            0.3 * np.sqrt(2),
+            -0.1 * np.sqrt(2),
+            0.1 * np.sqrt(2),
+        ]
+
+        test_result = geo_utils.distance_multi_point_to_multi_polygon_ray_casting(
+            boundary_vertices=polygons,
+            points_x=points[:, 0],
+            points_y=points[:, 1],
+            regions=np.array([0, 0, 0, 0]),
         )
 
         assert np.allclose(test_result, expected_distance)
@@ -148,20 +231,108 @@ class TestDistancePointToPolygonRayCasting:
         )
         pass
 
-    def test_distance_point_to_polygon_inside(self):
+    def test_distance_point_to_unitsquare_inside(self, subtests):
 
-        point = np.array([0.25, 0.5])
         polygon = np.array([[0, 0], [1, 0], [1, 1], [0, 1]])
 
-        expected_distance = -0.25
+        for idx_point, (point, expected_distance) in enumerate(
+            [(np.array([0.25, 0.5]), -0.25)]
+        ):
 
-        test_result = geo_utils.distance_point_to_polygon_ray_casting(
-            point, vertices=polygon
+            with subtests.test(f"point {idx_point}"):
+                test_result = geo_utils.distance_point_to_polygon_ray_casting(
+                    point, vertices=polygon
+                )
+                assert test_result == pytest.approx(expected_distance)
+
+    def test_distance_point_to_offsettriangle_inside(self, subtests):
+
+        polygon = np.array([[0.0, 0.2], [0.8, 1.0], [0.0, 1.0]])
+
+        for idx_point, (point, expected_distance) in enumerate(
+            [
+                (np.array([0.2, 0.6]), -0.14142135623730953),
+                (np.array([0.4, 0.8]), -0.14142135623730953),
+                (np.array([0.8, 0.8]), 0.14142135623730953),
+            ]
+        ):
+
+            with subtests.test(f"point {idx_point}"):
+                test_result = geo_utils.distance_point_to_polygon_ray_casting(
+                    point, vertices=polygon
+                )
+                assert test_result == pytest.approx(expected_distance)
+
+    def test_process_edge_multiple(self, subtests):
+
+        polygon = np.array([[0.0, 0.2], [0.8, 1.0], [0.0, 1.0]])
+        point = np.array([0.8, 0.8])
+        expected_below = [False, False, True]
+
+        for idx_end_point, end_point in enumerate(polygon):
+
+            with subtests.test(f"end point {idx_end_point}"):
+                start_point = polygon[idx_end_point - 1]
+                is_below, distance, vertex_crossing = geo_utils.process_edge(
+                    edge_start=start_point, edge_end=end_point, point=point, shift=1e-10
+                )
+                assert is_below == expected_below[idx_end_point]
+
+    def test_process_edge_multiple_above(self, subtests):
+
+        polygon = np.array([[0.8, 1.0], [0.0, 0.2], [0.8, 0.2]])
+        point = np.array([0.0, 0.8])
+        expected_below = [False, False, False]
+
+        for idx_end_point, end_point in enumerate(polygon):
+
+            with subtests.test(f"end point {idx_end_point}"):
+                start_point = polygon[idx_end_point - 1]
+                is_below, distance, vertex_crossing = geo_utils.process_edge(
+                    edge_start=start_point, edge_end=end_point, point=point, shift=1e-10
+                )
+                assert is_below == expected_below[idx_end_point]
+
+        for idx_end_point, end_point in enumerate(polygon):
+
+            with subtests.test(f"end point {idx_end_point}"):
+                start_point = polygon[idx_end_point - 1]
+                is_below, distance, vertex_crossing = geo_utils.process_edge(
+                    edge_start=start_point, edge_end=end_point, point=point, shift=1e-10
+                )
+                assert vertex_crossing == 0.0
+
+    def test_process_edge_single(self, subtests):
+
+        line = np.array([[0.8, 1.0], [0.0, 1.0]])
+        point = np.array([0.8, 0.8])
+
+        is_below, distance, vertex_crossing = geo_utils.process_edge(
+            edge_start=line[0], edge_end=line[1], point=point, shift=1e-10
         )
+        with subtests.test(f"test below edge"):
+            assert is_below == True
+        with subtests.test(f"test vertex crossing"):
+            assert vertex_crossing == True
+        with subtests.test(f"test distance"):
+            assert distance == pytest.approx(0.2, rel=1e-7)
 
-        assert test_result == pytest.approx(expected_distance)
+    def test_process_edge_single_colinear(self, subtests):
 
-    def test_distance_point_to_polygon_center(self):
+        line = np.array([[0.8, 1.0], [0.0, 1.0]])
+        point = np.array([0.4, 1.0])
+
+        is_below, distance, vertex_crossing = geo_utils.process_edge(
+            edge_start=line[0], edge_end=line[1], point=point, shift=1e-10
+        )
+        with subtests.test(f"test below edge"):
+            assert is_below == False
+        with subtests.test(f"test vertex crossing"):
+            assert vertex_crossing == 0
+        with subtests.test(f"test distance"):
+            assert distance == pytest.approx(0.0, rel=1e-7)
+
+    def test_distance_point_to_unitsquare_center(self):
 
         point = np.array([0.5, 0.5])
         polygon = np.array([[0, 0], [1, 0], [1, 1], [0, 1]])
@@ -174,7 +345,7 @@ class TestDistancePointToPolygonRayCasting:
 
         assert test_result == pytest.approx(expected_distance, rel=1e-2)
 
-    def test_distance_point_to_polygon_outside(self):
+    def test_distance_point_to_unitsquare_outside(self):
 
         point = np.array([-0.5, 0.5])
         polygon = np.array([[0, 0], [1, 0], [1, 1], [0, 1]])
@@ -187,7 +358,7 @@ class TestDistancePointToPolygonRayCasting:
 
         assert test_result == pytest.approx(expected_distance, rel=1e-2)
 
-    def test_distance_point_to_polygon_grad_2d(self, subtests):
+    def test_distance_point_to_unitsquare_grad_2d(self, subtests):
 
         point = np.array([-0.25, 0.5], dtype=float)
         polygon = np.array([[0, 0], [1, 0], [1, 1], [0, 1]], dtype=float)
