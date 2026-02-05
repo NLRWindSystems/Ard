@@ -1,7 +1,10 @@
 import importlib
 import openmdao.api as om
 from openmdao.drivers.doe_driver import DOEGenerator
+from wisdem.optimization_drivers.nsga2_driver import NSGA2Driver
+from openmdao.utils.file_utils import clean_outputs
 from ard.utils.io import load_yaml, replace_key_value
+from ard.utils.logging import prepend_tabs_to_stdio
 from ard.cost.wisdem_wrap import (
     LandBOSSE_setup_latents,
     ORBIT_setup_latents,
@@ -113,7 +116,8 @@ def set_up_ard_model(input_dict: Union[str, dict], root_data_path: str = None):
 def set_up_system_recursive(
     input_dict: dict,
     system_name: str = "top_level",
-    work_dir: str = "ard_prob_out",
+    case_name: str | None = None,
+    work_dir: str = "case_files",
     parent_group=None,
     modeling_options: dict = None,
     analysis_options: dict = None,
@@ -130,19 +134,41 @@ def set_up_system_recursive(
     Returns:
         om.Problem: The OpenMDAO problem with the defined system hierarchy.
     """
+
+    # grab the case name if it's supplied in the system yaml
+    if case_name is None:
+        case_name = modeling_options.get(
+            "case_name",
+            input_dict.get("modeling_options", {}).get(
+                "case_name",
+                "ard_problem",
+            ),
+        )
+
     # Initialize the top-level problem if no parent group is provided
     if parent_group is None:
-        prob = om.Problem(work_dir=work_dir)
+        # clean out any pre-existing results for this problem
+        print("Running OpenMDAO util to clean the output directories...")
+        prepend_tabs_to_stdio(clean_outputs)(recurse=True, prompt=False)
+        print("... done.\n")
+
+        prob = om.Problem(
+            name=case_name,
+            work_dir=work_dir,
+        )
         parent_group = prob.model
-        # parent_group.name = "ard_model"
+
+        print(f"Created top-level OpenMDAO problem: {system_name}.")
     else:
         prob = None
 
     # Add subsystems directly from the input dictionary
     if hasattr(parent_group, "name") and (parent_group.name != ""):
-        print(f"Adding {system_name} to {parent_group.name}")
+        print(
+            f"{''.join(['\t' for _ in range(_depth)])}Adding {system_name} to {parent_group.name}."
+        )
     else:
-        print(f"Adding {system_name}")
+        print(f"{''.join(['\t' for _ in range(_depth)])}Adding {system_name}.")
     if "systems" in input_dict:  # Recursively add nested subsystems]
         if _depth > 0:
             group = parent_group.add_subsystem(
@@ -195,35 +221,44 @@ def set_up_system_recursive(
             src, tgt = connection  # Unpack the connection as [src, tgt]
             parent_group.connect(src, tgt)
 
+    if _depth == 0:
+        print(f"System {system_name} built.")
+
     # Set up the problem if this is the top-level call
     if prob is not None:
 
         if analysis_options:
             # set up driver
             if "driver" in analysis_options:
-                Driver = getattr(om, analysis_options["driver"]["name"])
 
-                # handle DOE drivers with special treatment
-                if Driver == om.DOEDriver:
-                    generator = None
-                    if "generator" in analysis_options["driver"]:
-                        if type(analysis_options["driver"]["generator"]) == dict:
-                            gen_dict = analysis_options["driver"]["generator"]
-                            generator = getattr(om, gen_dict["name"])(
-                                **gen_dict["args"]
-                            )
-                        elif isinstance(
-                            analysis_options["driver"]["generator"], DOEGenerator
-                        ):
-                            generator = analysis_options["driver"]["generator"]
-                        else:
-                            raise NotImplementedError(
-                                "Only dictionary-specified or OpenMDAO "
-                                "DOEGenerator generators have been implemented."
-                            )
-                    prob.driver = Driver(generator)
+                name_driver = analysis_options["driver"]["name"]
+
+                if name_driver == "NSGA2":
+                    prob.driver = NSGA2Driver()
                 else:
-                    prob.driver = Driver()
+                    Driver = getattr(om, name_driver)
+
+                    # handle DOE drivers with special treatment
+                    if Driver == om.DOEDriver:
+                        generator = None
+                        if "generator" in analysis_options["driver"]:
+                            if type(analysis_options["driver"]["generator"]) == dict:
+                                gen_dict = analysis_options["driver"]["generator"]
+                                generator = getattr(om, gen_dict["name"])(
+                                    **gen_dict["args"]
+                                )
+                            elif isinstance(
+                                analysis_options["driver"]["generator"], DOEGenerator
+                            ):
+                                generator = analysis_options["driver"]["generator"]
+                            else:
+                                raise NotImplementedError(
+                                    "Only dictionary-specified or OpenMDAO "
+                                    "DOEGenerator generators have been implemented."
+                                )
+                        prob.driver = Driver(generator)
+                    else:
+                        prob.driver = Driver()
 
                 # handle the options now
                 if "options" in analysis_options["driver"]:
@@ -284,6 +319,7 @@ def set_up_system_recursive(
         )
 
         # setup the openmdao problem
+        print(f"System {system_name} set up.")
         prob.setup()
 
     return prob

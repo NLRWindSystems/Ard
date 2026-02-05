@@ -1,0 +1,8 @@
+
+text.usetex: True
+font.family: ['serif']
+text.latex.preamble: "\usepackage{amsfonts} \usepackage{physics}"
+axes.spines.bottom: False
+axes.spines.left: False
+axes.spines.right: False
+axes.spines.top: False

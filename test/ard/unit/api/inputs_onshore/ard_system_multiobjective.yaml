@@ -1,0 +1,100 @@
+modeling_options: &modeling_options
+  case_name: test_multiobjective
+  windIO_plant: !include windio.yaml
+  layout:
+      type: gridfarm
+      N_turbines: 25
+      N_substations: 1
+      spacing_primary: 7.0
+      spacing_secondary: 7.0
+      angle_orientation: 0.0
+      angle_skew: 0.0
+  aero:
+    return_turbine_output: True
+  floris:
+    peak_shaving_fraction: 0.2
+    peak_shaving_TI_threshold: 0.0
+
+system:
+  type: group
+  systems:
+    layout:
+      type: component
+      module: ard.layout.gridfarm
+      object: GridFarmLayout
+      promotes: ["*"]
+      kwargs:
+        modeling_options: *modeling_options
+    aepFLORIS:
+      type: component
+      module: ard.farm_aero.floris
+      object: FLORISAEP
+      promotes: ["AEP_farm"]
+      kwargs:
+        modeling_options: *modeling_options
+        data_path:
+        case_title: "default"
+    lug:
+      type: group
+      systems:
+        landuse:
+          type: component
+          module: ard.layout.gridfarm
+          object: GridFarmLanduse
+          promotes: ["*"]
+          kwargs:
+            modeling_options: *modeling_options
+      promotes: ["*"]
+    boundary:
+      type: component
+      module: ard.layout.boundary
+      object: FarmBoundaryDistancePolygon
+      promotes: ["*"]
+      kwargs:
+        modeling_options: *modeling_options
+  connections:
+    - ["x_turbines", "aepFLORIS.x_turbines"]
+    - ["x_turbines", "aepFLORIS.y_turbines"]
+
+analysis_options:
+  driver:
+    name: SimpleGADriver
+    options:
+      max_gen: 2
+      pop_size: 2
+      # optimizer: NSGA2
+      # opt_settings:
+      #   PopSize: 2
+      #   maxGen: 2
+      debug_print:
+        - desvars
+        - objs
+  design_variables:
+    spacing_primary:
+      lower:  3.0
+      upper: 20.0
+    spacing_secondary:
+      lower:  3.0
+      upper: 20.0
+    angle_orientation:
+      lower: -180.0
+      upper:  180.0
+    angle_skew:
+      lower: -45.0
+      upper:  45.0
+  constraints:
+    boundary_distances:
+      units: km
+      upper: 0.0
+      scaler: 2.0
+  objectives:
+    AEP_farm:
+      scaler: 1.0
+      units: GW*h
+    lug.landuse.area_tight:
+      scaler: 1.0
+      units: km**2
+      index: 0
+
+  recorder:
+    filepath: cases.sql

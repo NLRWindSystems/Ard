@@ -4,6 +4,8 @@ modeling_options: &modeling_options
     N_turbines: 25
     N_substations: 1
   site_depth: 200.0
+  aero:
+    return_turbine_output: True
   collection:
     max_turbines_per_string: 8
     solver_name: "highs"

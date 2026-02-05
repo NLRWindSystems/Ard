@@ -84,7 +84,7 @@ jobs:
         pip install .[dev]
     - name: Run unit tests with coverage
       run: |
-        pytest --cov=ard --cov-fail-under=80 test/unit
+        pytest --cov=ard --cov-fail-under=80 test/ard/unit
 
   test-system:
     name: Run system tests
@@ -124,8 +124,8 @@ jobs:
         pip install .[dev]
     - name: Run system tests with coverage
       run: |
-        pytest --cov=ard --cov-fail-under=50 test/system
-        # pytest --cov=ard --cov-fail-under=80 test/system
+        pytest --cov=ard --cov-fail-under=50 test/ard/system
+        # pytest --cov=ard --cov-fail-under=80 test/ard/system
 
   find-examples:
     name: Find all examples
