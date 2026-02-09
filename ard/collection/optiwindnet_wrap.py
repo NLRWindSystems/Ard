@@ -58,13 +58,15 @@ def _own_L_from_inputs(inputs: dict, discrete_inputs: dict) -> nx.Graph:
             if np.sum(dxy != 0) == 0:
                 continue
             warn_string += (
-                "\n\t" + f"adjusting turbine #{idx} from {VertexCTR[idx, :]} to  {VertexCTR[idx, :] + dxy}"
+                "\n\t"
+                + f"adjusting turbine #{idx} from {VertexCTR[idx, :]} to  {VertexCTR[idx, :] + dxy}"
             )
         for idx, dxy in enumerate((adjustments[-R:, :])[::-1, :]):
             if np.sum(dxy != 0) == 0:
                 continue
             warn_string += (
-                "\n\t" + f"adjusting substation #{idx} from {VertexCTR[-(idx+1), :]} to {VertexCTR[-(idx+1), :] + dxy}"
+                "\n\t"
+                + f"adjusting substation #{idx} from {VertexCTR[-(idx+1), :]} to {VertexCTR[-(idx+1), :] + dxy}"
             )
         # output the final warning
         warn(warn_string)

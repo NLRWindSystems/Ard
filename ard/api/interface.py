@@ -189,7 +189,7 @@ def set_up_system_recursive(
             )
         if "approx_totals" in input_dict:
             prefix = "\t"
-            print(prefix.join(f"Activating approximate totals on {system_name}"))
+            print(prefix + f"Activating approximate totals on {system_name}")
             group.approx_totals(**input_dict["approx_totals"])
 
     else:
