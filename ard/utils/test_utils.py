@@ -50,7 +50,9 @@ def pyrite_validator(
                 print(f"for variable {k}:", file=sys.stderr)
                 prefix = "\t"
                 print(
-                    prefix.join(f"{sum_isclose} values match of {vd_size} total validation values"),
+                    prefix.join(
+                        f"{sum_isclose} values match of {vd_size} total validation values"
+                    ),
                     file=sys.stderr,
                 )
                 print(prefix.join(f"to a tolerance of {rtol_val:e}"), file=sys.stderr)
