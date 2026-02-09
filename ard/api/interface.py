@@ -168,7 +168,7 @@ def set_up_system_recursive(
             f"{''.join(' ' * 4 * _depth)}Adding {system_name} to {parent_group.name}."
         )
     else:
-        print(f"{''.join(['    ' for _ in range(_depth)])}Adding {system_name}.")
+        print(f"{''.join(' ' * 4 * _depth)}Adding {system_name}.")
     if "systems" in input_dict:  # Recursively add nested subsystems]
         if _depth > 0:
             group = parent_group.add_subsystem(
