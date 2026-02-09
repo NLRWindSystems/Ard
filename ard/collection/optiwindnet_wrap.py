@@ -42,9 +42,10 @@ def _own_L_from_inputs(inputs: dict, discrete_inputs: dict) -> nx.Graph:
         ]
     )
     if np.any(repeat_accumulate > 0):  # only if there are any repeats
+        prefix = "\n"
         warn_string = (
-            f"\nDetected {np.sum(repeat_accumulate > 0)} coincident "
-            f"turbines and/or substations in optiwindnet setup."
+            prefix.join(f"Detected {np.sum(repeat_accumulate > 0)} coincident "
+            f"turbines and/or substations in optiwindnet setup.")
         )  # start a warning string for the UserWarning
         # TODO: make Ard warnings?
 
@@ -57,11 +58,13 @@ def _own_L_from_inputs(inputs: dict, discrete_inputs: dict) -> nx.Graph:
         for idx, dxy in enumerate(adjustments[:T, :]):
             if np.sum(dxy != 0) == 0:
                 continue
-            warn_string += f"\n\tadjusting turbine #{idx} from {VertexCTR[idx, :]} to  {VertexCTR[idx, :] + dxy}"
+            prefix = "\n\t"
+            warn_string += prefix.join(f"adjusting turbine #{idx} from {VertexCTR[idx, :]} to  {VertexCTR[idx, :] + dxy}")
         for idx, dxy in enumerate((adjustments[-R:, :])[::-1, :]):
             if np.sum(dxy != 0) == 0:
                 continue
-            warn_string += f"\n\tadjusting substation #{idx} from {VertexCTR[-(idx+1), :]} to {VertexCTR[-(idx+1), :] + dxy}"
+            prefix = "\n\t"
+            warn_string += prefix.join(f"adjusting substation #{idx} from {VertexCTR[-(idx+1), :]} to {VertexCTR[-(idx+1), :] + dxy}")
         # output the final warning
         warn(warn_string)
 
