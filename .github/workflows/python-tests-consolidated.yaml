@@ -14,8 +14,8 @@ jobs:
     name: Setup and install Ard
     strategy:
       matrix:
-        python-version: [3.12] # ["3.10", "3.11", "3.12", "3.13"]
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        python-version: [3.11, 3.13] # ["3.10", "3.11", "3.12", "3.13"]
+        os: [ubuntu-latest, windows-latest] # macos-latest
         include:
         - os: ubuntu-latest
           path: ~/.cache/pip
@@ -51,8 +51,8 @@ jobs:
     needs: setup-install
     strategy:
       matrix:
-        python-version: [3.12] # ["3.10", "3.11", "3.12", "3.13"]
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        python-version: [3.11, 3.13] # ["3.10", "3.11", "3.12", "3.13"]
+        os: [ubuntu-latest, windows-latest] # macos-latest
         include:
         - os: ubuntu-latest
           path: ~/.cache/pip
@@ -91,8 +91,8 @@ jobs:
     needs: test-unit
     strategy:
       matrix:
-        python-version: [3.12] # ["3.10", "3.11", "3.12", "3.13"]
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        python-version: [3.11, 3.13] # ["3.10", "3.11", "3.12", "3.13"]
+        os: [ubuntu-latest, windows-latest] # macos-latest
         include:
         - os: ubuntu-latest
           path: ~/.cache/pip
@@ -154,8 +154,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.12] # ["3.10", "3.11", "3.12", "3.13"]
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        python-version: [3.11, 3.13] # ["3.10", "3.11", "3.12", "3.13"]
+        os: [ubuntu-latest, windows-latest] # macos-latest
         include:
         - os: ubuntu-latest
           path: ~/.cache/pip
@@ -235,8 +235,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.12] # ["3.10", "3.11", "3.12", "3.13"]
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        python-version: [3.11, 3.13] # ["3.10", "3.11", "3.12", "3.13"]
+        os: [ubuntu-latest, windows-latest] # macos-latest
         include:
         - os: ubuntu-latest
           path: ~/.cache/pip
