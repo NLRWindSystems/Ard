@@ -12,11 +12,13 @@ import wisdem.orbit.orbit_api as orbit_wisdem
 from ORBIT.core.library import default_library
 from ORBIT.core.library import initialize_library
 
+from ard.collection.optiwindnet_wrap import _S_from_terse_links
+from ard.collection.optiwindnet_wrap import _own_L_from_inputs
 from ard.cost.wisdem_wrap import ORBIT_setup_latents
 
 
 def generate_orbit_location_from_graph(
-    graph,  # TODO: replace with a terse_links representation
+    terse_links,
     X_turbines,
     Y_turbines,
     X_substations,
@@ -56,6 +58,10 @@ def generate_orbit_location_from_graph(
     RecursionError
         if the recursive setup seems to be stuck in a loop
     """
+
+    # create graph from terse links
+    tlm = np.astype(terse_links, np.int_)
+    graph = _S_from_terse_links(tlm)
 
     # get all edges, sorted by the first node then the second node
     edges_to_process = [edge for edge in graph.edges]
@@ -209,7 +215,9 @@ class ORBITDetail(orbit_wisdem.Orbit):
         super().initialize()
 
         self.options.declare("case_title", default="working")
-        self.options.declare("modeling_options")
+        self.options.declare(
+            "modeling_options", types=dict, desc="Ard modeling options"
+        )
         self.options.declare("approximate_branches", default=False)
 
     def setup(self):
@@ -287,7 +295,7 @@ class ORBITWisdemDetail(orbit_wisdem.OrbitWisdem):
         self.N_substations = self.modeling_options["layout"]["N_substations"]
 
         # bring in collection system design
-        self.add_discrete_input("graph", None)
+        self.add_input("terse_links", np.full((self.N_turbines,), -1))
 
         # add the detailed turbine and substation locations
         self.add_input("x_turbines", np.zeros((self.N_turbines,)), units="km")
@@ -359,7 +367,7 @@ class ORBITWisdemDetail(orbit_wisdem.OrbitWisdem):
 
         # generate the csv data needed to locate the farm elements
         generate_orbit_location_from_graph(
-            discrete_inputs["graph"],
+            inputs["terse_links"],
             inputs["x_turbines"],
             inputs["y_turbines"],
             inputs["x_substations"],
@@ -430,7 +438,7 @@ class ORBITDetailedGroup(om.Group):
                 "total_capex_kW",
                 "bos_capex",
                 "installation_capex",
-                "graph",
+                "terse_links",
                 "x_turbines",
                 "y_turbines",
                 "x_substations",
@@ -443,3 +451,17 @@ class ORBITDetailedGroup(om.Group):
         # connect
         for key in variable_mapping.keys():
             self.connect(key, f"orbit.{key}")
+
+    def setup_partials(self):
+
+        self.declare_partials(
+            "*",
+            "*",
+            method="fd",
+            step=1.0e-5,
+            form="central",
+            step_calc="rel_avg",
+        )
+        self.declare_partials(
+            "terse_links", "*", method="exact", val=0.0, dependent=False
+        )

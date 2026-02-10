@@ -144,7 +144,7 @@ class TestORBITNoApproxBranch:
                 "y_substations",
             ],
         )
-        model.connect("collection.graph", "orbit.graph")
+        model.connect("collection.terse_links", "orbit.terse_links")
 
         model.set_input_defaults(
             "x_turbines", modeling_options["layout"]["x_turbines"], units="km"
@@ -328,7 +328,7 @@ class TestORBITNoApproxBranch:
                 "y_substations",
             ],
         )
-        model.connect("collection.graph", "orbit.graph")
+        model.connect("collection.terse_links", "orbit.terse_links")
 
         model.set_input_defaults(
             "x_turbines", modeling_options["layout"]["x_turbines"], units="km"
@@ -525,7 +525,7 @@ class TestORBITApproxBranch:
                 "y_substations",
             ],
         )
-        self.model.connect("collection.graph", "orbit.graph")
+        self.model.connect("collection.terse_links", "orbit.terse_links")
 
         self.model.set_input_defaults(
             "x_turbines", self.modeling_options["layout"]["x_turbines"], units="km"

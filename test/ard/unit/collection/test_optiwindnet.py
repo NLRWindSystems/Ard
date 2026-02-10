@@ -129,6 +129,7 @@ class TestOptiWindNetCollection:
             # make sure that the outputs in the component match what we planned
             output_list = [k for k, v in self.collection.list_outputs()]
             for var_to_check in [
+                "terse_links",
                 "total_length_cables",
             ]:
                 assert var_to_check in output_list
@@ -141,7 +142,6 @@ class TestOptiWindNetCollection:
                 "length_cables",
                 "load_cables",
                 "max_load_cables",
-                "terse_links",
             ]:
                 assert var_to_check in discrete_output_list
 
