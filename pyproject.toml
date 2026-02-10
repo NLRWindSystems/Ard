@@ -18,7 +18,7 @@ include = ["ard", "ard.*"]
 
 [project]
 name = "ard-nrel"
-version = "0.1.0-beta3"
+version = "0.1.0-beta4"
 authors = [
   {name = "Cory Frontin", email = "cory.frontin@nrel.gov"},
   {name = "Rafael Mudafort", email = "rafael.mudafort@nrel.gov"},
