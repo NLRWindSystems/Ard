@@ -198,7 +198,8 @@ def prepend_tabs_to_stdio(func, tabs=1):
         output = sys.stdout.getvalue()
         sys.stdout = old_stdout
 
-        tabset = "".join(["\t" for t in range(tabs)])
+        prefix = "\t"
+        tabset = "".join([prefix for t in range(tabs)])
         if output:
             for line in output.splitlines():
                 print(f"{tabset}{line}")
