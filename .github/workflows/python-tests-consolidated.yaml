@@ -46,8 +46,8 @@ jobs:
       run: |
         pip install .[dev]
 
-  test-unit:
-    name: Run unit tests
+  test-ard-unit:
+    name: Run Ard unit tests
     needs: setup-install
     strategy:
       matrix:
@@ -86,9 +86,9 @@ jobs:
       run: |
         pytest --cov=ard --cov-fail-under=80 test/ard/unit
 
-  test-system:
-    name: Run system tests
-    needs: test-unit
+  test-ard-system:
+    name: Run Ard system tests
+    needs: test-ard-unit
     strategy:
       matrix:
         python-version: [3.12] # ["3.10", "3.11", "3.12", "3.13"]
@@ -127,9 +127,90 @@ jobs:
         pytest --cov=ard --cov-fail-under=50 test/ard/system
         # pytest --cov=ard --cov-fail-under=80 test/ard/system
 
+  test-flowers-unit:
+    name: Run FLOWERS unit tests
+    needs: setup-install
+    strategy:
+      matrix:
+        python-version: [3.12] # ["3.10", "3.11", "3.12", "3.13"]
+        os: [macos-latest, ubuntu-latest, windows-latest]
+        include:
+        - os: ubuntu-latest
+          path: ~/.cache/pip
+        - os: macos-latest
+          path: ~/Library/Caches/pip
+        - os: windows-latest
+          path: ~\AppData\Local\pip\Cache
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Get cache dependencies
+      id: cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ matrix.path }}
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+        restore-keys:
+          ${{ runner.os }}-pip-
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+    - name: Install Ard
+      run: |
+        pip install .[dev]
+    - name: Run unit tests with coverage
+      run: |
+        pytest --cov=flowers --cov-fail-under=80 test/flowers/unit
+
+  test-flowers-system:
+    name: Run FLOWERS system tests
+    needs: test-flowers-unit
+    strategy:
+      matrix:
+        python-version: [3.12] # ["3.10", "3.11", "3.12", "3.13"]
+        os: [macos-latest, ubuntu-latest, windows-latest]
+        include:
+        - os: ubuntu-latest
+          path: ~/.cache/pip
+        - os: macos-latest
+          path: ~/Library/Caches/pip
+        - os: windows-latest
+          path: ~\AppData\Local\pip\Cache
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Get cache dependencies
+      id: cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ matrix.path }}
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+        restore-keys:
+          ${{ runner.os }}-pip-
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+    - name: Install Ard
+      run: |
+        pip install .[dev]
+    - name: Run system tests with coverage
+      run: |
+        pytest --cov=flowers --cov-fail-under=50 test/flowers/system
+        # pytest --cov=flowers --cov-fail-under=80 test/flowers/system
+
   find-examples:
     name: Find all examples
-    needs: [test-unit, test-system]
+    needs: [test-ard-unit, test-ard-system, test-flowers-unit, test-flowers-system]
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
@@ -142,7 +223,7 @@ jobs:
       id: find_scripts
       run: |
         echo "scripts<<EOF" >> $GITHUB_OUTPUT
-        find examples -mindepth 2 -maxdepth 2 -name "*.py" | jq -R -s -c 'split("\n")[:-1]' >> $GITHUB_OUTPUT
+        find examples -mindepth 3 -maxdepth 3 -name "*.py" | jq -R -s -c 'split("\n")[:-1]' >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
     outputs:
       scripts: ${{ steps.find_scripts.outputs.scripts }}
@@ -207,7 +288,7 @@ jobs:
 
   find-examples_nb:
     name: Find all example notebooks
-    needs: [test-unit, test-system]
+    needs: [test-ard-unit, test-ard-system, test-flowers-unit, test-flowers-system]
     if: needs.find-examples_nb.outputs.scripts != '[]'  # skip empty
     runs-on: ubuntu-latest
     steps:
@@ -221,10 +302,10 @@ jobs:
       id: find_notebooks
       run: |
         echo "scripts<<EOF"
-        find examples -mindepth 2 -maxdepth 2 -name "*.ipynb" | jq -R -s -c 'split("\n")[:-1]'
+        find examples -mindepth 3 -maxdepth 3 -name "*.ipynb" | jq -R -s -c 'split("\n")[:-1]'
         echo "EOF"
         echo "scripts<<EOF" >> $GITHUB_OUTPUT
-        find examples -mindepth 2 -maxdepth 2 -name "*.ipynb" | jq -R -s -c 'split("\n")[:-1]' >> $GITHUB_OUTPUT
+        find examples -mindepth 3 -maxdepth 3 -name "*.ipynb" | jq -R -s -c 'split("\n")[:-1]' >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
     outputs:
       scripts: ${{ steps.find_notebooks.outputs.scripts }}

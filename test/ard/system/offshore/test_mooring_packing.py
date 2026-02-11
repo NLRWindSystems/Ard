@@ -21,6 +21,7 @@ class TestMooringPacking:
         filename_turbine = (
             Path(ard.__file__).parents[1]
             / "examples"
+            / "ard"
             / "data"
             / "windIO-plant_turbine_IEA-22MW-284m-RWT.yaml"
         )  # windIO turbine specification

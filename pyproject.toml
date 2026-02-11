@@ -11,7 +11,7 @@ build-backend = "setuptools.build_meta"
 # https://setuptools.pypa.io/en/latest/userguide/package_discovery.html
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["ard", "ard.*"]
+include = ["ard", "ard.*", "flowers"]
 
 [tool.setuptools.package-data]
 "ard.api.default_systems" = ["*.yaml"]
@@ -23,6 +23,7 @@ authors = [
   {name = "Cory Frontin", email = "cory.frontin@nrel.gov"},
   {name = "Rafael Mudafort", email = "rafael.mudafort@nrel.gov"},
   {name = "Jared Thomas", email = "jared.thomas@nrel.gov"},
+  {name = "Christopher Bay", email = "christopher.bay@nrel.gov"},
 ]
 description = "A package for multidisciplinary and/or multifidelity wind farm design"
 readme= "README.md"
@@ -39,6 +40,9 @@ classifiers = [
 ]
 dependencies = [
   "numpy",
+  "matplotlib",
+  "scipy",
+  "pandas",
   "floris>=4.3",
   "wisdem>=4.0.5",
   "NLopt",
