@@ -12,7 +12,7 @@ modeling_options:
             y: [5.0, -5.0, -5.0, 5.0]
       energy_resource:
         name: "OFL system test resource"
-        wind_resource: !include ../../../../../examples/data/windIO-plant_wind-resource_wrg-example.yaml
+        wind_resource: !include ../../../../../examples/ard/data/windIO-plant_wind-resource_wrg-example.yaml
     wind_farm:
       name: "OFL system test farm"
       layouts:
@@ -31,7 +31,7 @@ modeling_options:
             0.0, 0.0, 0.0, 0.0, 0.0,
             0.0, 0.0, 0.0, 0.0, 0.0,
           ]
-      turbine: !include ../../../../../examples/data/windIO-plant_turbine_IEA-22MW-284m-RWT.yaml
+      turbine: !include ../../../../../examples/ard/data/windIO-plant_turbine_IEA-22MW-284m-RWT.yaml
       electrical_substations:
         - electrical_substation:
             coordinates:

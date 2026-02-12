@@ -335,6 +335,7 @@ class TestBathymetryGridData(TestGeomorphologyGridData):
         file_bathy = (
             Path(ard.__file__).parents[1]
             / "examples"
+            / "ard"
             / "data"
             / "offshore"
             / "GulfOfMaine_bathymetry_100x99.txt"

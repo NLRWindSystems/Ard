@@ -1,5 +1,7 @@
 [run]
-omit = 
+omit =
     ard/utils/test_utils.py
     ard/farm_aero/placeholder.py
-    
+    flowers/visualization.py
+    flowers/optimization/optimization_interface.py
+    flowers/optimization/model_interface.py
