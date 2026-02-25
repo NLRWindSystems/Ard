@@ -108,8 +108,8 @@ class CollectionTemplate(om.ExplicitComponent):
 
         # set up outputs for the collection system
         self.add_output("total_length_cables", 0.0, units="m")
+        self.add_output("terse_links", np.full((self.N_turbines,), -1))
         self.add_discrete_output("length_cables", np.zeros((self.N_turbines,)))
-        self.add_discrete_output("terse_links", np.full((self.N_turbines,), -1))
         self.add_discrete_output("load_cables", np.zeros((self.N_turbines,)))
         self.add_discrete_output("max_load_cables", 0.0)
         self.add_discrete_output("graph", None)
