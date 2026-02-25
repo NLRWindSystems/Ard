@@ -54,7 +54,7 @@ system:
         modeling_options: *modeling_options
   connections:
     - ["x_turbines", "aepFLORIS.x_turbines"]
-    - ["x_turbines", "aepFLORIS.y_turbines"]
+    - ["y_turbines", "aepFLORIS.y_turbines"]
 
 analysis_options:
   driver:

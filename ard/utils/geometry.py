@@ -70,12 +70,6 @@ def get_nearest_polygons(
     return region
 
 
-# Pad all polygons to have the same number of vertices
-def pad_polygon(polygon, max_vertices):
-    padding = max_vertices - len(polygon)
-    return jnp.pad(polygon, ((0, padding), (0, 0)), mode="edge")
-
-
 def distance_multi_point_to_multi_polygon_ray_casting(
     points_x: np.ndarray[float],
     points_y: np.ndarray[float],

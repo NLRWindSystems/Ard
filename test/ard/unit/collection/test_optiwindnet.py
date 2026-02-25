@@ -10,8 +10,6 @@ import pytest
 
 optiwindnet = pytest.importorskip("optiwindnet")
 
-from optiwindnet.plotting import gplot
-
 import ard.utils.io
 import ard.utils.test_utils
 import ard.collection.optiwindnet_wrap as ard_own
