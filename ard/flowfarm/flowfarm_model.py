@@ -29,12 +29,15 @@ def _ensure_env_activated():
     jl_pkg.activate(str(_JULIA_PROJECT_DIR))
     jl_pkg.instantiate()  # ensures Manifest is honored / deps are present
 
+
 def _ensure_flowfarm_loaded():
     ensure_flowfarm_loaded()
+
 
 # ------------------------------------------------------------------------------
 # Utility: Julia Vector conversion (optional; JuliaCall already converts NumPy arrays)
 # ------------------------------------------------------------------------------
+
 
 def _jvec(x):
     """Convert Python list/array → Julia Vector{Float64} (explicit)."""
@@ -64,7 +67,9 @@ def _build_flowfarm_power_model(
             ["PowerModelCpPoints"],
         )
         if power_points_ctor is None:
-            raise AttributeError("FLOWFarm.PowerModelCpPoints constructor was not found.")
+            raise AttributeError(
+                "FLOWFarm.PowerModelCpPoints constructor was not found."
+            )
         return power_points_ctor(
             _jvec(cp_curve["Cp_wind_speeds"]),
             _jvec(cp_curve["Cp_values"]),
@@ -108,7 +113,9 @@ def _build_flowfarm_ct_model(
             ["ThrustModelCtPoints"],
         )
         if ct_points_ctor is None:
-            raise AttributeError("FLOWFarm.ThrustModelCtPoints constructor was not found.")
+            raise AttributeError(
+                "FLOWFarm.ThrustModelCtPoints constructor was not found."
+            )
         return ct_points_ctor(
             _jvec(ct_curve["Ct_wind_speeds"]),
             _jvec(ct_curve["Ct_values"]),
@@ -152,7 +159,9 @@ def resolve_turbine_inputs_for_flowfarm(windio_turbine):
     }
 
     missing_scalars = [
-        key for key in scalar_defaults if key not in windio_turbine or windio_turbine[key] is None
+        key
+        for key in scalar_defaults
+        if key not in windio_turbine or windio_turbine[key] is None
     ]
     if missing_scalars:
         defaults_used = {key: scalar_defaults[key] for key in missing_scalars}
@@ -196,9 +205,17 @@ def resolve_turbine_inputs_for_flowfarm(windio_turbine):
         )
 
     fallback_wind_speeds = [
-        float(windio_turbine.get("cutin_wind_speed", scalar_defaults["cutin_wind_speed"])),
-        float(windio_turbine.get("rated_wind_speed", scalar_defaults["rated_wind_speed"])),
-        float(windio_turbine.get("cutout_wind_speed", scalar_defaults["cutout_wind_speed"])),
+        float(
+            windio_turbine.get("cutin_wind_speed", scalar_defaults["cutin_wind_speed"])
+        ),
+        float(
+            windio_turbine.get("rated_wind_speed", scalar_defaults["rated_wind_speed"])
+        ),
+        float(
+            windio_turbine.get(
+                "cutout_wind_speed", scalar_defaults["cutout_wind_speed"]
+            )
+        ),
     ]
 
     power_model = _build_flowfarm_power_model(
@@ -217,11 +234,21 @@ def resolve_turbine_inputs_for_flowfarm(windio_turbine):
     )
 
     return {
-        "generator_efficiency": windio_turbine.get("generator_efficiency", scalar_defaults["generator_efficiency"]),
-        "rated_power": windio_turbine.get("rated_power", scalar_defaults["rated_power"]),
-        "rated_wind_speed": windio_turbine.get("rated_wind_speed", scalar_defaults["rated_wind_speed"]),
-        "cutin_wind_speed": windio_turbine.get("cutin_wind_speed", scalar_defaults["cutin_wind_speed"]),
-        "cutout_wind_speed": windio_turbine.get("cutout_wind_speed", scalar_defaults["cutout_wind_speed"]),
+        "generator_efficiency": windio_turbine.get(
+            "generator_efficiency", scalar_defaults["generator_efficiency"]
+        ),
+        "rated_power": windio_turbine.get(
+            "rated_power", scalar_defaults["rated_power"]
+        ),
+        "rated_wind_speed": windio_turbine.get(
+            "rated_wind_speed", scalar_defaults["rated_wind_speed"]
+        ),
+        "cutin_wind_speed": windio_turbine.get(
+            "cutin_wind_speed", scalar_defaults["cutin_wind_speed"]
+        ),
+        "cutout_wind_speed": windio_turbine.get(
+            "cutout_wind_speed", scalar_defaults["cutout_wind_speed"]
+        ),
         "ct_model": ct_model,
         "power_model": power_model,
     }
@@ -232,9 +259,7 @@ def resolve_wake_model_inputs_for_flowfarm(flowfarm_model_options):
     if flowfarm_model_options is None:
         flowfarm_model_options = {}
     if not isinstance(flowfarm_model_options, dict):
-        raise TypeError(
-            "FLOWFarm options must be provided as a dictionary."
-        )
+        raise TypeError("FLOWFarm options must be provided as a dictionary.")
 
     defaults = {
         "wake_deficit_model": "GaussYawVariableSpread",
@@ -285,7 +310,9 @@ def resolve_wake_model_inputs_for_flowfarm(flowfarm_model_options):
         )
 
     missing = [
-        key for key in defaults if key not in flowfarm_model_options or flowfarm_model_options[key] is None
+        key
+        for key in defaults
+        if key not in flowfarm_model_options or flowfarm_model_options[key] is None
     ]
     if missing:
         defaults_used = {key: defaults[key] for key in missing}
@@ -336,18 +363,18 @@ def resolve_wake_model_inputs_for_flowfarm(flowfarm_model_options):
 
     return resolved
 
+
 # ------------------------------------------------------------------------------
 # Public interface
 # ------------------------------------------------------------------------------
 
+
 class FlowFarmModel:
-    
+
     def __init__(self, wind_rose, layout_x, layout_y, yaw_turbine):
         _ensure_env_activated()
         _ensure_flowfarm_loaded()
-        
+
         n_turbines = len(layout_x)
-        
-        
-        
+
         self.farm, self.sparse_struct = load_flowfarm_model()

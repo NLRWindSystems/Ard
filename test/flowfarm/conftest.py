@@ -14,6 +14,7 @@ def _julia_available() -> bool:
         return False
     try:
         import importlib.util
+
         return importlib.util.find_spec("juliacall") is not None
     except Exception:
         return False

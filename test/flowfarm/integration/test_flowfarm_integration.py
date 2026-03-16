@@ -11,6 +11,7 @@ Run only these tests:
 Run without these tests:
     pytest -m "not julia" ...
 """
+
 from pathlib import Path
 
 import numpy as np
@@ -20,7 +21,6 @@ import yaml
 
 import ard
 import ard.utils.test_utils
-
 
 # ---------------------------------------------------------------------------
 # Shared test data
@@ -83,7 +83,7 @@ def _make_aep_modeling_options():
                 }
             },
         },
-        "layout": {"N_turbines": n_side ** 2},
+        "layout": {"N_turbines": n_side**2},
         "aero": {"return_turbine_output": True},
     }
 
@@ -171,9 +171,9 @@ class TestFLOWFarmAEPIntegration:
         for key, vals in data.items():
             rel_err = vals.get("rel error")
             if rel_err is not None:
-                assert abs(rel_err.forward) < 0.01, (
-                    f"Partial derivative rel error too large for {key}: {rel_err.forward:.4f}"
-                )
+                assert (
+                    abs(rel_err.forward) < 0.01
+                ), f"Partial derivative rel error too large for {key}: {rel_err.forward:.4f}"
 
     def test_aep_decreases_with_closer_spacing(self):
         """AEP should be lower for a tighter layout due to increased wake losses."""
@@ -203,7 +203,9 @@ class TestFLOWFarmAEPPyrite:
 
         modeling_options = _make_aep_modeling_options()
         model = om.Group()
-        model.add_subsystem("aepFLOWFarm", FLOWFarmAEP(modeling_options=modeling_options))
+        model.add_subsystem(
+            "aepFLOWFarm", FLOWFarmAEP(modeling_options=modeling_options)
+        )
         prob = om.Problem(model)
         prob.setup()
 

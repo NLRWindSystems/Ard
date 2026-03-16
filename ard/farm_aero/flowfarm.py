@@ -12,12 +12,13 @@ from ard.flowfarm.flowfarm_model import (
 
 import ard.farm_aero.templates as templates
 
+
 class FLOWFarmComponent:
-    
+
     def initialize(self):
         # This mixin is invoked explicitly by derived classes; no super() chain here.
         return
-        
+
     def setup(self):
         jl = ensure_flowfarm_loaded()
         self._jl = jl
@@ -25,16 +26,15 @@ class FLOWFarmComponent:
         self.N_turbines = model_options["layout"]["N_turbines"]
         windIO = model_options["windIO_plant"]
         N_turbines = self.N_turbines
-        
+
         turbine_floris = create_FLORIS_turbine_from_windIO(windIO)
-        ref_air_density=model_options.get("flowfarm", {}).get(
-                "ref_air_density", 1.225
-            )
-        
-        
-        hub_height=turbine_floris["hub_height"]
-        rotor_diameter=turbine_floris["rotor_diameter"]
-        
+        ref_air_density = model_options.get("flowfarm", {}).get(
+            "ref_air_density", 1.225
+        )
+
+        hub_height = turbine_floris["hub_height"]
+        rotor_diameter = turbine_floris["rotor_diameter"]
+
         windIOturbine = windIO["wind_farm"]["turbine"]
         turbine_inputs = resolve_turbine_inputs_for_flowfarm(windIOturbine)
         generator_efficiency = turbine_inputs["generator_efficiency"]
@@ -49,18 +49,18 @@ class FLOWFarmComponent:
             windIO,
             resource_type="probability",
         )
-        
+
         wind_directions = windrose_floris.wd_flat
         wind_speeds = windrose_floris.ws_flat
         wind_probabilities = windrose_floris.freq_table_flat
         turbulence_intensity = np.mean(windrose_floris.ti_table_flat)
         ref_height = windIO["site"]["energy_resource"]["wind_resource"].get(
-                "reference_height", hub_height
-            )
-        wind_shear=windIO["site"]["energy_resource"]["wind_resource"].get(
-                "shear", 0.084
-            )
-        
+            "reference_height", hub_height
+        )
+        wind_shear = windIO["site"]["energy_resource"]["wind_resource"].get(
+            "shear", 0.084
+        )
+
         flowfarm_options = model_options.get("flowfarm", {})
         wake_option_keys = {
             "wake_deficit_model",
@@ -143,8 +143,7 @@ class FLOWFarmComponent:
         rated_powers = jl.fill(float(rated_power), N_turbines)
 
         # Use a pure Julia callback so threaded FLOWFarm paths do not call back into Python.
-        jl.seval(
-            """
+        jl.seval("""
             function ard_make_flowfarm_update_fn()
                 return function (farm, x)
                     n = length(farm.turbine_x)
@@ -156,8 +155,7 @@ class FLOWFarmComponent:
                     return nothing
                 end
             end
-            """
-        )
+            """)
         update_fn = jl.ard_make_flowfarm_update_fn()
         sparse_farm, sparse_struct = flowfarm_module.build_unstable_sparse_struct(
             x0,
@@ -219,7 +217,9 @@ class FLOWFarmComponent:
 
     def _evaluate_sparse(self, x_eval_np):
         """Run sparse gradient evaluation once and cache AEP/gradient for reuse."""
-        if hasattr(self, "_cached_sparse_x") and np.array_equal(self._cached_sparse_x, x_eval_np):
+        if hasattr(self, "_cached_sparse_x") and np.array_equal(
+            self._cached_sparse_x, x_eval_np
+        ):
             return
 
         jl = getattr(self, "_jl", None)
@@ -240,7 +240,9 @@ class FLOWFarmComponent:
 
     def _evaluate_farm(self, x_eval_np):
         """Run regular farm AEP evaluation and cache AEP."""
-        if hasattr(self, "_cached_farm_x") and np.array_equal(self._cached_farm_x, x_eval_np):
+        if hasattr(self, "_cached_farm_x") and np.array_equal(
+            self._cached_farm_x, x_eval_np
+        ):
             return
 
         jl = getattr(self, "_jl", None)
@@ -266,9 +268,7 @@ class FLOWFarmComponent:
         self._evaluate_sparse(x_eval_np)
         grad = self._cached_sparse_grad
         partials["AEP_farm", "x_turbines"] = grad[: self.N_turbines]
-        partials["AEP_farm", "y_turbines"] = grad[
-            self.N_turbines : 2 * self.N_turbines
-        ]
+        partials["AEP_farm", "y_turbines"] = grad[self.N_turbines : 2 * self.N_turbines]
         partials["AEP_farm", "yaw_turbines"] = grad[
             2 * self.N_turbines : 3 * self.N_turbines
         ]
@@ -335,9 +335,7 @@ class FLOWFarmBatchPower(templates.BatchFarmPowerTemplate, FLOWFarmComponent):
         self._evaluate_sparse(x_eval_np)
 
         state_gradients = np.asarray(self.sparse_struct.state_gradients)
-        partials["power_farm", "x_turbines"] = state_gradients[
-            :, : self.N_turbines
-        ]
+        partials["power_farm", "x_turbines"] = state_gradients[:, : self.N_turbines]
         partials["power_farm", "y_turbines"] = state_gradients[
             :, self.N_turbines : 2 * self.N_turbines
         ]

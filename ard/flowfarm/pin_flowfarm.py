@@ -2,10 +2,13 @@
 from __future__ import annotations
 import sys, pathlib
 import juliacall
-from juliacall import Pkg as jlPkg  # JuliaPkg via JuliaCall (documented) [1](https://juliapy.github.io/PythonCall.jl/stable/juliacall/)
+from juliacall import (
+    Pkg as jlPkg,
+)  # JuliaPkg via JuliaCall (documented) [1](https://juliapy.github.io/PythonCall.jl/stable/juliacall/)
 
 FLOWFARM_GIT_URL = "https://github.com/byuflowlab/FLOWFarm.jl"
-FLOWFARM_REV     = "typestability"  # <-- BRANCH PIN
+FLOWFARM_REV = "typestability"  # <-- BRANCH PIN
+
 
 def main(argv=None):
     env_dir = pathlib.Path(__file__).parent / "julia_env"
@@ -21,11 +24,15 @@ def main(argv=None):
         pass
 
     print(f"[pin] Pkg.add url={FLOWFARM_GIT_URL} rev={FLOWFARM_REV}")
-    jlPkg.add(url=FLOWFARM_GIT_URL, rev=FLOWFARM_REV)  # captures exact revision in Manifest [1](https://juliapy.github.io/PythonCall.jl/stable/juliacall/)
+    jlPkg.add(
+        url=FLOWFARM_GIT_URL, rev=FLOWFARM_REV
+    )  # captures exact revision in Manifest [1](https://juliapy.github.io/PythonCall.jl/stable/juliacall/)
 
     jl = juliacall.newmodule("ArdFLOWFarmPin")
     print("[pin] Loading FLOWFarm…")
-    jl.seval("using FLOWFarm")     # FLOWFarm usage/install documented in repo [2](https://github.com/byuflowlab/FlowFarm.jl)
+    jl.seval(
+        "using FLOWFarm"
+    )  # FLOWFarm usage/install documented in repo [2](https://github.com/byuflowlab/FlowFarm.jl)
 
     # Optional: precompile to warm caches on first run
     if "--precompile" in (argv or []):
@@ -34,6 +41,7 @@ def main(argv=None):
 
     manifest = env_dir / "Manifest.toml"
     print(f"[done] Manifest at: {manifest if manifest.exists() else '(missing)'}")
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])

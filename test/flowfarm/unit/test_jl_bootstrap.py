@@ -4,6 +4,7 @@ Unit tests for ard/flowfarm/_jl_bootstrap.py.
 juliacall is mocked entirely via sys.modules — Julia does not need to be installed
 for these tests.
 """
+
 import os
 import pathlib
 import sys
@@ -13,7 +14,6 @@ from unittest.mock import MagicMock, call
 import pytest
 
 import ard.flowfarm._jl_bootstrap as bootstrap
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -115,7 +115,10 @@ class TestIsManifestMismatchError:
         assert bootstrap._is_manifest_mismatch_error(Exception(msg)) is True
 
     def test_returns_false_for_unrelated_error(self):
-        assert bootstrap._is_manifest_mismatch_error(Exception("FLOWFarm not found")) is False
+        assert (
+            bootstrap._is_manifest_mismatch_error(Exception("FLOWFarm not found"))
+            is False
+        )
 
     def test_returns_false_for_empty_message(self):
         assert bootstrap._is_manifest_mismatch_error(Exception("")) is False

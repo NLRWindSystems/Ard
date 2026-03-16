@@ -6,11 +6,12 @@ import warnings
 
 # Hard-coded pin (change/remove later as needed)
 FLOWFARM_GIT_URL = "https://github.com/byuflowlab/FLOWFarm.jl"
-FLOWFARM_REV     = "master"   # <-- BRANCH PIN
+FLOWFARM_REV = "master"  # <-- BRANCH PIN
 
 _jl_module = None
 _jl_runtime = None
 _flowfarm_env_initialized = False
+
 
 def _normalize_juliacall_env_vars():
     """Normalize JuliaCall env vars so Ard owns bootstrap by default.
@@ -100,6 +101,7 @@ def ensure_flowfarm_loaded():
         jl_main.seval("using FLOWFarm")
     return jl_main
 
+
 def get_julia_module():
     """Initialize Julia once, activate env, and return a private module with FLOWFarm loaded."""
     global _jl_module
@@ -109,7 +111,11 @@ def get_julia_module():
     ensure_flowfarm_loaded()
     import juliacall
 
-    jl = juliacall.newmodule("ArdFLOWFarm")  # recommended pattern to avoid polluting Main [1](https://juliapy.github.io/PythonCall.jl/stable/juliacall/)
-    jl.seval("using FLOWFarm")               # standard FLOWFarm usage/installation [2](https://github.com/byuflowlab/FlowFarm.jl)
+    jl = juliacall.newmodule(
+        "ArdFLOWFarm"
+    )  # recommended pattern to avoid polluting Main [1](https://juliapy.github.io/PythonCall.jl/stable/juliacall/)
+    jl.seval(
+        "using FLOWFarm"
+    )  # standard FLOWFarm usage/installation [2](https://github.com/byuflowlab/FlowFarm.jl)
     _jl_module = jl
     return _jl_module

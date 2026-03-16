@@ -4,6 +4,7 @@ Unit tests for ard/farm_aero/flowfarm.py.
 Julia is mocked entirely — these tests cover the Python-layer logic of
 FLOWFarmComponent, FLOWFarmAEP, and FLOWFarmBatchPower without starting Julia.
 """
+
 import sys
 from unittest.mock import MagicMock, patch
 
@@ -12,7 +13,6 @@ import pytest
 
 from ard.farm_aero.flowfarm import FLOWFarmAEP, FLOWFarmBatchPower, FLOWFarmComponent
 import ard.farm_aero.templates as templates
-
 
 # ---------------------------------------------------------------------------
 # _build_design_vector  (pure numpy — no Julia)

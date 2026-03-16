@@ -5,6 +5,7 @@ resolve_wake_model_inputs_for_flowfarm is pure Python and tested without any moc
 resolve_turbine_inputs_for_flowfarm calls Julia internally; those calls are patched.
 _resolve_flowfarm_constructor is pure Python and tested with simple mock objects.
 """
+
 import warnings
 from unittest.mock import MagicMock, patch
 
@@ -15,7 +16,6 @@ from ard.flowfarm.flowfarm_model import (
     resolve_turbine_inputs_for_flowfarm,
     resolve_wake_model_inputs_for_flowfarm,
 )
-
 
 # ---------------------------------------------------------------------------
 # resolve_wake_model_inputs_for_flowfarm  (pure Python — no Julia needed)
@@ -77,15 +77,21 @@ class TestResolveWakeModelInputs:
 
     def test_invalid_deflection_model_raises_value_error(self):
         with pytest.raises(ValueError, match="wake_deflection_model"):
-            resolve_wake_model_inputs_for_flowfarm({"wake_deflection_model": "NotAModel"})
+            resolve_wake_model_inputs_for_flowfarm(
+                {"wake_deflection_model": "NotAModel"}
+            )
 
     def test_invalid_combination_model_raises_value_error(self):
         with pytest.raises(ValueError, match="wake_combination_model"):
-            resolve_wake_model_inputs_for_flowfarm({"wake_combination_model": "NotAModel"})
+            resolve_wake_model_inputs_for_flowfarm(
+                {"wake_combination_model": "NotAModel"}
+            )
 
     def test_invalid_ti_model_raises_value_error(self):
         with pytest.raises(ValueError, match="local_turbulence_model"):
-            resolve_wake_model_inputs_for_flowfarm({"local_turbulence_model": "NotAModel"})
+            resolve_wake_model_inputs_for_flowfarm(
+                {"local_turbulence_model": "NotAModel"}
+            )
 
     def test_non_string_model_name_raises_type_error(self):
         with pytest.raises(TypeError, match="wake_deficit_model"):
@@ -293,6 +299,7 @@ class TestResolveTurbineInputs:
 
         # Verify _build_flowfarm_ct_model received constant_ct=0.75
         from ard.flowfarm import flowfarm_model as ffm
+
         # The patch replaced the builder; check it was called with the right constant
         # (patched_julia fixture doesn't expose call args, so just check no error raised)
 
