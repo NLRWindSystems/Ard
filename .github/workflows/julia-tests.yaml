@@ -41,7 +41,7 @@ jobs:
 
     - name: Pre-instantiate Julia environment
       run: |
-        julia -e "using Pkg; Pkg.Registry.update()"
+        julia -e "using Pkg; Pkg.Registry.add(\"General\"); Pkg.Registry.update()"
         julia --project=ard/flowfarm/julia_env -e "using Pkg; Pkg.resolve(); Pkg.instantiate()"
 
     - name: Run FLOWFarm integration tests
