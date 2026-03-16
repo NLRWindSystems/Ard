@@ -1,27 +1,14 @@
 import os
-import sys
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 from ard.farm_aero.floris import create_FLORIS_turbine_from_windIO
-try:
-    from flowfarm.flowfarm_model import (
-        ensure_flowfarm_loaded,
-        resolve_turbine_inputs_for_flowfarm,
-        resolve_wake_model_inputs_for_flowfarm,
-    )
-except ModuleNotFoundError:
-    # Local checkout fallback: add repository-level Ard/ to sys.path.
-    repo_ard_dir = Path(__file__).resolve().parents[2]
-    if str(repo_ard_dir) not in sys.path:
-        sys.path.insert(0, str(repo_ard_dir))
-    from flowfarm.flowfarm_model import (
-        ensure_flowfarm_loaded,
-        resolve_turbine_inputs_for_flowfarm,
-        resolve_wake_model_inputs_for_flowfarm,
-    )
+from ard.flowfarm.flowfarm_model import (
+    ensure_flowfarm_loaded,
+    resolve_turbine_inputs_for_flowfarm,
+    resolve_wake_model_inputs_for_flowfarm,
+)
 
 import ard.farm_aero.templates as templates
 
