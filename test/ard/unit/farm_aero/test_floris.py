@@ -11,6 +11,58 @@ import ard.utils.io
 import ard.utils.test_utils
 import ard.wind_query as wq
 import ard.farm_aero.floris as farmaero_floris
+import ard.farm_aero.templates as farmaero_templates
+
+
+def _build_timeseries_windio(reference_height=None, h_ref=None):
+    wind_resource = {
+        "wind_direction": [270.0, 280.0],
+        "wind_speed": [8.0, 9.0],
+        "turbulence_intensity": [0.06, 0.06],
+        "time": [0, 1],
+    }
+    if reference_height is not None:
+        wind_resource["reference_height"] = reference_height
+    if h_ref is not None:
+        wind_resource["shear"] = {
+            "h_ref": h_ref
+        }
+
+    return {
+        "site": {
+            "energy_resource": {
+                "wind_resource": wind_resource,
+            },
+        },
+    }
+
+
+class TestWindResourceReferenceHeightAliases:
+
+    def test_reference_height_or_h_ref_single_key(self):
+        windio_ref = _build_timeseries_windio(reference_height=110.0)
+        resource_ref = farmaero_templates.create_windresource_from_windIO(
+            windio_ref, "timeseries"
+        )
+        assert resource_ref.reference_height == 110.0
+
+        windio_href = _build_timeseries_windio(h_ref=95.0)
+        resource_href = farmaero_templates.create_windresource_from_windIO(
+            windio_href, "timeseries"
+        )
+        assert resource_href.reference_height == 95.0
+
+    def test_reference_height_and_h_ref_same_value(self):
+        windio = _build_timeseries_windio(reference_height=100.0, h_ref=100.0)
+        resource = farmaero_templates.create_windresource_from_windIO(
+            windio, "timeseries"
+        )
+        assert resource.reference_height == 100.0
+
+    def test_reference_height_and_h_ref_different_values_raise(self):
+        windio = _build_timeseries_windio(reference_height=100.0, h_ref=101.0)
+        with pytest.raises(ValueError, match="reference_height.*h_ref"):
+            farmaero_templates.create_windresource_from_windIO(windio, "timeseries")
 
 
 class TestFLORISFarmComponent:
@@ -59,7 +111,9 @@ class TestFLORISBatchPower:
                             "wind_speed": wind_query.get_speeds().tolist(),
                             "turbulence_intensity": wind_query.get_TIs().tolist(),
                             "time": np.zeros_like(wind_query.get_speeds().tolist()),
-                            "shear": 0.585,
+                            "shear": {
+                                "alpha": 0.585,
+                            },
                         },
                         "reference_height": 90.0,
                     },
@@ -204,7 +258,9 @@ class TestFLORISAEP:
                                     "wind_speed",
                                 ],
                             },
-                            "shear": 0.585,
+                            "shear": {
+                                "alpha": 0.585,
+                            },
                             "reference_height": 110.0,
                         },
                     },

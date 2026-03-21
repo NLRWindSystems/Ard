@@ -26,7 +26,9 @@ class TestLandBOSSE:
                 "site": {
                     "energy_resource": {
                         "wind_resource": {
-                            "shear": 0.2,
+                            "shear": {
+                                "alpha": 0.2,
+                            },
                         },
                     },
                 },
