@@ -12,6 +12,7 @@ import ard.utils.test_utils
 import ard.wind_query as wq
 import ard.farm_aero.floris as farmaero_floris
 
+
 class TestFLORISFarmComponent:
 
     def setup_method(self):

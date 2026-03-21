@@ -20,9 +20,7 @@ def _build_timeseries_windio(reference_height=None, h_ref=None):
     if reference_height is not None:
         wind_resource["reference_height"] = reference_height
     if h_ref is not None:
-        wind_resource["shear"] = {
-            "h_ref": h_ref
-        }
+        wind_resource["shear"] = {"h_ref": h_ref}
 
     return {
         "site": {

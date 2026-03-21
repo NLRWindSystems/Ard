@@ -201,11 +201,12 @@ class FLORISFarmComponent:
             turbine_type=[
                 create_FLORIS_turbine_from_windIO(self.windIO, self.modeling_options),
             ],
-            wind_shear=self.windIO["site"]["energy_resource"]["wind_resource"].get(
-                "shear", {},
-            ).get(
-                "alpha"
-            ),
+            wind_shear=self.windIO["site"]["energy_resource"]["wind_resource"]
+            .get(
+                "shear",
+                {},
+            )
+            .get("alpha"),
             reference_wind_height=getattr(
                 self.wind_query,
                 "reference_height",
