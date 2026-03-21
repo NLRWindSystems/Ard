@@ -51,6 +51,21 @@ def create_windresource_from_windIO(
     # get the wind resource specification out of the dictionary
     wind_resource = windIOdict["site"]["energy_resource"]["wind_resource"]
 
+    reference_height = wind_resource.get("reference_height")
+    h_ref = wind_resource.get("shear", {}).get("h_ref")
+    if (
+        reference_height is not None
+        and h_ref is not None
+        and not np.isclose(reference_height, h_ref)
+    ):
+        raise ValueError(
+            "Both 'reference_height' and 'h_ref' were provided in wind_resource "
+            f"with different values ({reference_height} vs {h_ref})."
+        )
+    wind_resource_reference_height = (
+        reference_height if reference_height is not None else h_ref
+    )
+
     # figure out the case in play
     fields_wind_resource = wind_resource.keys()
     case_probability_based = all(
@@ -122,11 +137,7 @@ def create_windresource_from_windIO(
             ti_table=turbulence_intensities,
         )
         # stash some metadata for the wind resource
-        wind_resource_representation.reference_height = (
-            wind_resource["reference_height"]
-            if "reference_height" in wind_resource
-            else None
-        )
+        wind_resource_representation.reference_height = wind_resource_reference_height
 
         return wind_resource_representation
 
@@ -165,11 +176,7 @@ def create_windresource_from_windIO(
             turbulence_intensities=turbulence_intensities,
         )
         # stash some metadata for the wind resource
-        wind_resource_representation.reference_height = (
-            wind_resource["reference_height"]
-            if "reference_height" in wind_resource
-            else None
-        )
+        wind_resource_representation.reference_height = wind_resource_reference_height
         wind_resource_representation.time = (
             wind_resource["time"] if "time" in wind_resource else None
         )

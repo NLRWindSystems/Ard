@@ -5,11 +5,6 @@ from wisdem.optimization_drivers.nsga2_driver import NSGA2Driver
 from openmdao.utils.file_utils import clean_outputs
 from ard.utils.io import load_yaml, replace_key_value
 from ard.utils.logging import prepend_tabs_to_stdio
-from ard.cost.wisdem_wrap import (
-    LandBOSSE_setup_latents,
-    ORBIT_setup_latents,
-    FinanceSE_setup_latents,
-)
 import windIO
 from ard import ASSET_DIR
 from typing import Union
@@ -163,12 +158,11 @@ def set_up_system_recursive(
         prob = None
 
     # Add subsystems directly from the input dictionary
+    indent = "\t" * _depth
     if hasattr(parent_group, "name") and (parent_group.name != ""):
-        print(
-            f"{''.join(['\t' for _ in range(_depth)])}Adding {system_name} to {parent_group.name}."
-        )
+        print(f"{indent}Adding {system_name} to {parent_group.name}.")
     else:
-        print(f"{''.join(['\t' for _ in range(_depth)])}Adding {system_name}.")
+        print(f"{indent}Adding {system_name}.")
     if "systems" in input_dict:  # Recursively add nested subsystems]
         if _depth > 0:
             group = parent_group.add_subsystem(

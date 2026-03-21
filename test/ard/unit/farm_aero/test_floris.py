@@ -59,7 +59,9 @@ class TestFLORISBatchPower:
                             "wind_speed": wind_query.get_speeds().tolist(),
                             "turbulence_intensity": wind_query.get_TIs().tolist(),
                             "time": np.zeros_like(wind_query.get_speeds().tolist()),
-                            "shear": 0.585,
+                            "shear": {
+                                "alpha": 0.585,
+                            },
                         },
                         "reference_height": 90.0,
                     },
@@ -204,7 +206,9 @@ class TestFLORISAEP:
                                     "wind_speed",
                                 ],
                             },
-                            "shear": 0.585,
+                            "shear": {
+                                "alpha": 0.585,
+                            },
                             "reference_height": 110.0,
                         },
                     },

@@ -29,7 +29,9 @@ class TestORBITNoApproxBranch:
             "site": {
                 "energy_resource": {
                     "wind_resource": {
-                        "shear": 0.2,
+                        "shear": {
+                            "alpha": 0.2,
+                        },
                     },
                 },
             },
@@ -211,7 +213,9 @@ class TestORBITNoApproxBranch:
             "site": {
                 "energy_resource": {
                     "wind_resource": {
-                        "shear": 0.2,
+                        "shear": {
+                            "alpha": 0.2,
+                        },
                     },
                 },
             },
@@ -408,7 +412,9 @@ class TestORBITApproxBranch:
             "site": {
                 "energy_resource": {
                     "wind_resource": {
-                        "shear": 0.2,
+                        "shear": {
+                            "alpha": 0.2,
+                        },
                     },
                 },
             },
