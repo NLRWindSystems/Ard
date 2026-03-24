@@ -59,4 +59,4 @@ The components that achieve this can be assembled to either run a single top-dow
 
 ---
 
-Copyright &copy; 2024, Alliance for Sustainable Energy, LLC 
+Copyright &copy; 2024, Alliance for Sustainable Energy, LLC
