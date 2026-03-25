@@ -1,0 +1,689 @@
+
+<!DOCTYPE html>
+
+
+<html lang="python" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ard.utils.logging &#8212; Ard</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../_static/documentation_options.js?v=30a733bc"></script>
+    <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../../../_static/togglebutton.js?v=1ae7504c"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../../../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/ard/utils/logging';</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="python"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../intro.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo.png" class="logo__image only-light" alt="Ard - Home"/>
+    <img src="../../../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Ard - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../../../intro.html">
+                    Introduction
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../testing.html">Unit and system testing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/01_onshore/optimization_demo.html">01: Onshore layout-to-LCOE</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/02_offshore_fixed/optimization_demo.html">02: Monopile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/03_offshore_floating_custom_system/optimization_demo.html">03: Simplified Floating</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../api_reference.html">API Documentation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../_autosummary/ard.api.html">ard.api</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.api.interface.html">ard.api.interface</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../_autosummary/ard.collection.html">ard.collection</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.collection.optiwindnet_wrap.html">ard.collection.optiwindnet_wrap</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.collection.templates.html">ard.collection.templates</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../_autosummary/ard.cost.html">ard.cost</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.cost.approximate_turbine_spacing.html">ard.cost.approximate_turbine_spacing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.cost.orbit_wrap.html">ard.cost.orbit_wrap</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.cost.wisdem_wrap.html">ard.cost.wisdem_wrap</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../_autosummary/ard.farm_aero.html">ard.farm_aero</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.farm_aero.floris.html">ard.farm_aero.floris</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.farm_aero.placeholder.html">ard.farm_aero.placeholder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.farm_aero.templates.html">ard.farm_aero.templates</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../_autosummary/ard.geographic.html">ard.geographic</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.geographic.geomorphology.html">ard.geographic.geomorphology</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../_autosummary/ard.layout.html">ard.layout</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.layout.boundary.html">ard.layout.boundary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.layout.exclusions.html">ard.layout.exclusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.layout.fullfarm.html">ard.layout.fullfarm</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.layout.gridfarm.html">ard.layout.gridfarm</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.layout.spacing.html">ard.layout.spacing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.layout.sunflower.html">ard.layout.sunflower</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.layout.templates.html">ard.layout.templates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.layout.viewshed.html">ard.layout.viewshed</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../_autosummary/ard.offshore.html">ard.offshore</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.offshore.mooring_constraint.html">ard.offshore.mooring_constraint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.offshore.mooring_design_constant_depth.html">ard.offshore.mooring_design_constant_depth</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../_autosummary/ard.utils.html">ard.utils</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.utils.core.html">ard.utils.core</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.utils.geometry.html">ard.utils.geometry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.utils.io.html">ard.utils.io</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.utils.logging.html">ard.utils.logging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.utils.mathematics.html">ard.utils.mathematics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.utils.test_utils.html">ard.utils.test_utils</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../_autosummary/ard.viz.html">ard.viz</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.viz.house_style.html">ard.viz.house_style</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.viz.layout.html">ard.viz.layout</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.viz.plot_layout.html">ard.viz.plot_layout</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/ard.viz.utils.html">ard.viz.utils</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_autosummary/ard.wind_query.html">ard.wind_query</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Explanation</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../structure.html">OpenMDAO Component types</a></li>
+
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/wisdem/Ard" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/wisdem/Ard/issues/new?title=Issue%20on%20page%20%2F_modules/ard/utils/logging.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for ard.utils.logging</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">redirect_stdout</span><span class="p">,</span> <span class="n">redirect_stderr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">io</span><span class="w"> </span><span class="kn">import</span> <span class="n">StringIO</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">openmdao.core.component</span>
+
+
+<div class="viewcode-block" id="extract_iter">
+<a class="viewcode-back" href="../../../_autosummary/ard.utils.logging.html#ard.utils.logging.extract_iter">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_iter</span><span class="p">(</span><span class="n">component</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract the iter_count iff it exists, otherwise return None</span>
+
+<span class="sd">    Extract the iteration count from a component&#39;s associated model.</span>
+<span class="sd">    This function attempts to retrieve the iteration count from a component by</span>
+<span class="sd">    traversing through its problem metadata and model reference. It safely</span>
+<span class="sd">    handles cases where any of the required attributes or keys don&#39;t exist.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">        component: An object that may contain a _problem_meta attribute with</span>
+<span class="sd">                  model reference information.</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">        int or None: The iteration count from the model if it exists and is</span>
+<span class="sd">                    accessible, otherwise None.</span>
+<span class="sd">            The function returns None in the following cases:</span>
+<span class="sd">            - component doesn&#39;t have a _problem_meta attribute</span>
+<span class="sd">            - problem_meta doesn&#39;t contain a &quot;model_ref&quot; key</span>
+<span class="sd">            - the model doesn&#39;t have an iter_count attribute</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># extract the iter count if it exists, returning and handling none otherwise</span>
+    <span class="n">problem_meta</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">component</span><span class="p">,</span> <span class="s2">&quot;_problem_meta&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">problem_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;model_ref&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="kc">None</span><span class="p">)()</span>
+    <span class="n">iter_count</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;iter_count&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">iter_count</span></div>
+
+
+
+<div class="viewcode-block" id="get_storage_directory">
+<a class="viewcode-back" href="../../../_autosummary/ard.utils.logging.html#ard.utils.logging.get_storage_directory">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_storage_directory</span><span class="p">(</span>
+    <span class="n">component</span><span class="p">,</span>
+    <span class="n">storage_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;logs&quot;</span><span class="p">,</span>
+    <span class="n">get_iter</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">clean</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get a storage directory for the component constructed here.</span>
+
+<span class="sd">    Take a component and create a storage directory (for, e.g. logs or init</span>
+<span class="sd">    files), mirroring the OpenMDAO model structure as subdirectories, returning</span>
+<span class="sd">    a pathlib.Path to the storage directory.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    component : openmdao.core.Component</span>
+<span class="sd">        an OpenMDAO component for which we want to create a storage directory</span>
+<span class="sd">    storage_type : str, optional</span>
+<span class="sd">        the type of storage sub-directory to make, by default &quot;logs&quot;</span>
+<span class="sd">    get_iter : bool, optional</span>
+<span class="sd">        should the storage directory tree be given an iteration subdirectory, by</span>
+<span class="sd">        default False</span>
+<span class="sd">    clean : bool, optional</span>
+<span class="sd">        should the directory tree, if it already exists, be cleaned out, by</span>
+<span class="sd">        default False</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pathlib.Path</span>
+<span class="sd">        the path to the storage subdirectory created</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># the storage type we&#39;re doing (logs, discipline scripts, etc.)</span>
+    <span class="n">storage_dir</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">storage_type</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="c1"># if there&#39;s an iteration number to grab, grab it and add it to the dir</span>
+    <span class="nb">iter</span> <span class="o">=</span> <span class="n">extract_iter</span><span class="p">(</span><span class="n">component</span><span class="p">)</span> <span class="k">if</span> <span class="n">get_iter</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="nb">iter</span><span class="p">:</span>
+        <span class="n">storage_dir</span> <span class="o">+=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;iter_</span><span class="si">{</span><span class="nb">iter</span><span class="si">:</span><span class="s2">04d</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+    <span class="c1"># mirror the comp path for a log directory</span>
+    <span class="n">subdir_logger</span> <span class="o">=</span> <span class="n">component</span><span class="o">.</span><span class="n">pathname</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+    <span class="c1"># find the reports directory</span>
+    <span class="n">dir_reports</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">component</span><span class="o">.</span><span class="n">_problem_meta</span><span class="p">[</span><span class="s2">&quot;reports_dir&quot;</span><span class="p">])</span>
+    <span class="c1"># put the storage directory next to it</span>
+    <span class="n">path_storage</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">dir_reports</span><span class="o">.</span><span class="n">parent</span><span class="p">,</span> <span class="o">*</span><span class="n">storage_dir</span><span class="p">,</span> <span class="o">*</span><span class="n">subdir_logger</span><span class="p">)</span>
+
+    <span class="c1"># make a clean log location for this component if permitted</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">path_storage</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">FileExistsError</span><span class="p">:</span>  <span class="c1"># handle a FileExists, but raise anything else</span>
+        <span class="k">if</span> <span class="n">clean</span><span class="p">:</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">path_storage</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">path_storage</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span>
+
+    <span class="k">return</span> <span class="n">path_storage</span></div>
+
+
+
+<div class="viewcode-block" id="name_create_log">
+<a class="viewcode-back" href="../../../_autosummary/ard.utils.logging.html#ard.utils.logging.name_create_log">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">name_create_log</span><span class="p">(</span><span class="n">component</span><span class="p">,</span> <span class="nb">iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    For a given component, clean and create component- and rank-unique logfiles.</span>
+
+<span class="sd">    Take a component and create logs, parallel to the reports file, mirroring</span>
+<span class="sd">    the OpenMDAO model structure with stdout and stderr files for each rank,</span>
+<span class="sd">    and finally return the file paths for the component to redirect stdout and</span>
+<span class="sd">    stderr to.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    component : openmdao.core.component.Component</span>
+<span class="sd">        An OpenMDAO component that we want to capture stdout/stderr for</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pathlib.Path</span>
+<span class="sd">        a path to in the log system to dump stdout to</span>
+<span class="sd">    pathlib.Path</span>
+<span class="sd">        a path to in the log system to dump err to</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># make sure we are dealing with an OM component</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">component</span><span class="p">,</span> <span class="n">openmdao</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">component</span><span class="o">.</span><span class="n">Component</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Expected openmdao.core.component.Component, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">component</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">path_logfile_template</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">get_storage_directory</span><span class="p">(</span><span class="n">component</span><span class="p">,</span> <span class="s2">&quot;logs&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="n">clean</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;%s_rank</span><span class="si">{</span><span class="n">component</span><span class="o">.</span><span class="n">_comm</span><span class="o">.</span><span class="n">rank</span><span class="si">:</span><span class="s2">03d</span><span class="si">}</span><span class="s2">.txt&quot;</span>
+    <span class="p">)</span>
+    <span class="n">path_logfile_stdout</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path_logfile_template</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span> <span class="o">%</span> <span class="s2">&quot;stdout&quot;</span><span class="p">)</span>
+    <span class="n">path_logfile_stderr</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path_logfile_template</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span> <span class="o">%</span> <span class="s2">&quot;stderr&quot;</span><span class="p">)</span>
+
+    <span class="c1"># return stdout and stderr files</span>
+    <span class="k">return</span> <span class="n">path_logfile_stdout</span><span class="o">.</span><span class="n">absolute</span><span class="p">(),</span> <span class="n">path_logfile_stderr</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="component_log_capture">
+<a class="viewcode-back" href="../../../_autosummary/ard.utils.logging.html#ard.utils.logging.component_log_capture">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">component_log_capture</span><span class="p">(</span><span class="n">compute_func</span><span class="p">,</span> <span class="nb">iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Decorator that redirects stdout and stderr to component-wise and rank-wise logfiles.</span>
+
+<span class="sd">    This decorator will redirect stdout and stderr to component-wise and</span>
+<span class="sd">    rank-wise logfiles, which are determined by the `name_create_log` function.</span>
+<span class="sd">    The decorator uses context managers to redirect output streams to these</span>
+<span class="sd">    files, ensuring that all print statements and errors within the function are</span>
+<span class="sd">    logged appropriately.</span>
+
+<span class="sd">    func : Callable</span>
+<span class="sd">        The function to be decorated. It should be a method of a class, as</span>
+<span class="sd">        `self` is expected as the first argument.</span>
+
+<span class="sd">    Callable</span>
+<span class="sd">        The wrapped function with stdout and stderr redirected to log files</span>
+<span class="sd">        during its execution.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">compute_func</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="c1"># extract from modeling options the stdio_capture option iff it exists</span>
+        <span class="n">stdio_capture</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;modeling_options&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;stdio_capture&quot;</span><span class="p">)</span>
+        <span class="c1"># bail out, returning the function w/ no changes if it doesn&#39;t</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">stdio_capture</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">compute_func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c1"># if we get here, we want to capture stdio</span>
+
+        <span class="c1"># get log file paths</span>
+        <span class="n">path_stdout_log</span><span class="p">,</span> <span class="n">path_stderr_log</span> <span class="o">=</span> <span class="n">name_create_log</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># use context manager to redirect stdout &amp; stderr</span>
+            <span class="k">with</span> <span class="p">(</span>
+                <span class="nb">open</span><span class="p">(</span><span class="n">path_stdout_log</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stdout_file</span><span class="p">,</span>
+                <span class="nb">open</span><span class="p">(</span><span class="n">path_stderr_log</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">stderr_file</span><span class="p">,</span>
+                <span class="n">redirect_stdout</span><span class="p">(</span><span class="n">stdout_file</span><span class="p">),</span>
+                <span class="n">redirect_stderr</span><span class="p">(</span><span class="n">stderr_file</span><span class="p">),</span>
+            <span class="p">):</span>
+                <span class="k">return</span> <span class="n">compute_func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">raise</span>  <span class="c1"># make sure the exception is raised</span>
+
+    <span class="k">return</span> <span class="n">wrapper</span></div>
+
+
+
+<div class="viewcode-block" id="prepend_tabs_to_stdio">
+<a class="viewcode-back" href="../../../_autosummary/ard.utils.logging.html#ard.utils.logging.prepend_tabs_to_stdio">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">prepend_tabs_to_stdio</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">tabs</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">old_stdout</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span> <span class="o">=</span> <span class="n">StringIO</span><span class="p">()</span>
+
+        <span class="c1"># run the function</span>
+        <span class="n">returns</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c1"># get capture output and restore stdout</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span> <span class="o">=</span> <span class="n">old_stdout</span>
+
+        <span class="n">prefix</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span>
+        <span class="n">tabset</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">prefix</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">tabs</span><span class="p">)])</span>
+        <span class="k">if</span> <span class="n">output</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">output</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">tabset</span><span class="si">}{</span><span class="n">line</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># pass through the returns of the function</span>
+        <span class="k">return</span> <span class="n">returns</span>
+
+    <span class="k">return</span> <span class="n">wrapper</span></div>
+
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By National Renewable Energy Laboratory
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

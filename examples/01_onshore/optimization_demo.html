@@ -1,0 +1,1523 @@
+
+<!DOCTYPE html>
+
+
+<html lang="python" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>01: Onshore layout-to-LCOE &#8212; Ard</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/documentation_options.js?v=30a733bc"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../../_static/togglebutton.js?v=1ae7504c"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'examples/01_onshore/optimization_demo';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="02: Monopile" href="../02_offshore_fixed/optimization_demo.html" />
+    <link rel="prev" title="Unit and system testing" href="../../testing.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="python"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../intro.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/logo.png" class="logo__image only-light" alt="Ard - Home"/>
+    <img src="../../_static/logo.png" class="logo__image only-dark pst-js-only" alt="Ard - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../../intro.html">
+                    Introduction
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../testing.html">Unit and system testing</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">01: Onshore layout-to-LCOE</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../02_offshore_fixed/optimization_demo.html">02: Monopile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../03_offshore_floating_custom_system/optimization_demo.html">03: Simplified Floating</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../api_reference.html">API Documentation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../_autosummary/ard.api.html">ard.api</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.api.interface.html">ard.api.interface</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../_autosummary/ard.collection.html">ard.collection</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.collection.optiwindnet_wrap.html">ard.collection.optiwindnet_wrap</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.collection.templates.html">ard.collection.templates</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../_autosummary/ard.cost.html">ard.cost</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.cost.approximate_turbine_spacing.html">ard.cost.approximate_turbine_spacing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.cost.orbit_wrap.html">ard.cost.orbit_wrap</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.cost.wisdem_wrap.html">ard.cost.wisdem_wrap</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../_autosummary/ard.farm_aero.html">ard.farm_aero</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.farm_aero.floris.html">ard.farm_aero.floris</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.farm_aero.placeholder.html">ard.farm_aero.placeholder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.farm_aero.templates.html">ard.farm_aero.templates</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../_autosummary/ard.geographic.html">ard.geographic</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.geographic.geomorphology.html">ard.geographic.geomorphology</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../_autosummary/ard.layout.html">ard.layout</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.layout.boundary.html">ard.layout.boundary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.layout.exclusions.html">ard.layout.exclusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.layout.fullfarm.html">ard.layout.fullfarm</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.layout.gridfarm.html">ard.layout.gridfarm</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.layout.spacing.html">ard.layout.spacing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.layout.sunflower.html">ard.layout.sunflower</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.layout.templates.html">ard.layout.templates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.layout.viewshed.html">ard.layout.viewshed</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../_autosummary/ard.offshore.html">ard.offshore</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.offshore.mooring_constraint.html">ard.offshore.mooring_constraint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.offshore.mooring_design_constant_depth.html">ard.offshore.mooring_design_constant_depth</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../_autosummary/ard.utils.html">ard.utils</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.utils.core.html">ard.utils.core</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.utils.geometry.html">ard.utils.geometry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.utils.io.html">ard.utils.io</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.utils.logging.html">ard.utils.logging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.utils.mathematics.html">ard.utils.mathematics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.utils.test_utils.html">ard.utils.test_utils</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../_autosummary/ard.viz.html">ard.viz</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.viz.house_style.html">ard.viz.house_style</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.viz.layout.html">ard.viz.layout</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.viz.plot_layout.html">ard.viz.plot_layout</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/ard.viz.utils.html">ard.viz.utils</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../_autosummary/ard.wind_query.html">ard.wind_query</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Explanation</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../structure.html">OpenMDAO Component types</a></li>
+
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/wisdem/Ard" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/wisdem/Ard/edit/main/docs/examples/01_onshore/optimization_demo.ipynb" target="_blank"
+   class="btn btn-sm btn-source-edit-button dropdown-item"
+   title="Suggest edit"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-pencil-alt"></i>
+  </span>
+<span class="btn__text-container">Suggest edit</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/wisdem/Ard/issues/new?title=Issue%20on%20page%20%2Fexamples/01_onshore/optimization_demo.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../_sources/examples/01_onshore/optimization_demo.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>01: Onshore layout-to-LCOE</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="onshore-layout-to-lcoe">
+<h1>01: Onshore layout-to-LCOE<a class="headerlink" href="#onshore-layout-to-lcoe" title="Link to this heading">#</a></h1>
+<p>In this example, we will demonstrate <code class="docutils literal notranslate"><span class="pre">Ard</span></code>'s ability to run a layout-to-LCOE analysis and optimization.</p>
+<p>We can start by loading what we need to run the problem.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>  <span class="c1"># optional, for nice path specifications</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">pprint</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pp</span>  <span class="c1"># optional, for nice printing</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>  <span class="c1"># numerics library</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>  <span class="c1"># plotting capabilities</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">ard</span>  <span class="c1"># technically we only really need this</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ard.utils.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_yaml</span>  <span class="c1"># we grab a yaml loader here</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ard.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">set_up_ard_model</span>  <span class="c1"># the secret sauce</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ard.viz.layout</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_layout</span>  <span class="c1"># a plotting tool!</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">openmdao.api</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">om</span>  <span class="c1"># for N2 diagrams from the OpenMDAO backend</span>
+
+<span class="o">%</span><span class="k">matplotlib</span> inline
+</pre></div>
+</div>
+</div>
+</div>
+<p>This will do for now.
+We can probably make it a bit cleaner for a later release.</p>
+<p>Now, we can set up a case.
+We do it a little verbosely so that our documentation system can grab it, you can generally just use relative paths.
+We grab the file at <code class="docutils literal notranslate"><span class="pre">inputs/ard_system.yaml</span></code>, which describes the <code class="docutils literal notranslate"><span class="pre">Ard</span></code> system for this problem.
+It references, in turn, the <code class="docutils literal notranslate"><span class="pre">inputs/windio.yaml</span></code> file, which is where we define the plant we want to optimize, and an initial setup for it.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># load input</span>
+<span class="n">path_inputs</span> <span class="o">=</span> <span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span> <span class="o">/</span> <span class="s2">&quot;inputs&quot;</span>
+<span class="n">input_dict</span> <span class="o">=</span> <span class="n">load_yaml</span><span class="p">(</span><span class="n">path_inputs</span> <span class="o">/</span> <span class="s2">&quot;ard_system.yaml&quot;</span><span class="p">)</span>
+
+<span class="c1"># create and setup system</span>
+<span class="n">prob</span> <span class="o">=</span> <span class="n">set_up_ard_model</span><span class="p">(</span><span class="n">input_dict</span><span class="o">=</span><span class="n">input_dict</span><span class="p">,</span> <span class="n">root_data_path</span><span class="o">=</span><span class="n">path_inputs</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Running OpenMDAO util to clean the output directories...
+	No OpenMDAO output directories found.
+... done.
+
+Created top-level OpenMDAO problem: top_level.
+Adding top_level.
+    Adding layout2aep.
+        Adding layout to layout2aep.
+        Adding aepFLORIS to layout2aep.
+	Activating approximate totals on layout2aep
+    Adding boundary.
+    Adding landuse.
+    Adding collection.
+    Adding spacing_constraint.
+    Adding tcc.
+    Adding landbosse.
+    Adding opex.
+    Adding financese.
+System top_level built.
+System top_level set up.
+</pre></div>
+</div>
+</div>
+</div>
+<p>Here, you should see each of the groups or components described as they are added to the <code class="docutils literal notranslate"><span class="pre">Ard</span></code> model and, occasionally, some options being turned on on them, like semi-total finite differencing on groups.</p>
+<p>Next is some code you can flip on to use the <a class="reference external" href="https://openmdao.org/newdocs/versions/latest/features/model_visualization/n2_basics/n2_basics.html">N2 diagram vizualization tools from the backend toolset, OpenMDAO, that we use</a>.
+This can be a really handy debugging tool, if somewhat tricky to use; turned on it will show a comprehensive view of the system in terms of its components, variables, and connections, although we leave it off for now.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="kc">False</span><span class="p">:</span>
+    <span class="c1"># visualize model</span>
+    <span class="n">om</span><span class="o">.</span><span class="n">n2</span><span class="p">(</span><span class="n">prob</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>Now, we do a one-shot analysis.
+The one-shot analysis will run a wind farm as specified in <code class="docutils literal notranslate"><span class="pre">inputs/windio.yaml</span></code> and with the models specified in <code class="docutils literal notranslate"><span class="pre">inputs/ard_system.yaml</span></code>, then dump the outputs.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># run the model</span>
+<span class="n">prob</span><span class="o">.</span><span class="n">run_model</span><span class="p">()</span>
+
+<span class="c1"># collapse the test result data</span>
+<span class="n">test_data</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;AEP_val&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">get_val</span><span class="p">(</span><span class="s2">&quot;AEP_farm&quot;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;GW*h&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]),</span>
+    <span class="s2">&quot;CapEx_val&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">get_val</span><span class="p">(</span><span class="s2">&quot;tcc.tcc&quot;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;MUSD&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]),</span>
+    <span class="s2">&quot;BOS_val&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">get_val</span><span class="p">(</span><span class="s2">&quot;landbosse.total_capex&quot;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;MUSD&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]),</span>
+    <span class="s2">&quot;OpEx_val&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">get_val</span><span class="p">(</span><span class="s2">&quot;opex.opex&quot;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;MUSD/yr&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]),</span>
+    <span class="s2">&quot;LCOE_val&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">get_val</span><span class="p">(</span><span class="s2">&quot;financese.lcoe&quot;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;USD/MW/h&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]),</span>
+    <span class="s2">&quot;area_tight&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">get_val</span><span class="p">(</span><span class="s2">&quot;landuse.area_tight&quot;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;km**2&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]),</span>
+    <span class="s2">&quot;coll_length&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">get_val</span><span class="p">(</span><span class="s2">&quot;collection.total_length_cables&quot;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;km&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]),</span>
+    <span class="s2">&quot;turbine_spacing&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">get_val</span><span class="p">(</span><span class="s2">&quot;spacing_constraint.turbine_spacing&quot;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;km&quot;</span><span class="p">))</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">RESULTS:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">pp</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">test_data</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>RESULTS:
+
+{&#39;AEP_val&#39;: 406.53718092931325,
+ &#39;BOS_val&#39;: 41.68227106807093,
+ &#39;CapEx_val&#39;: 110.5,
+ &#39;LCOE_val&#39;: 37.274992401593316,
+ &#39;OpEx_val&#39;: 3.7400000000000007,
+ &#39;area_tight&#39;: 13.2496,
+ &#39;coll_length&#39;: 21.89865877023397,
+ &#39;turbine_spacing&#39;: 0.91}
+</pre></div>
+</div>
+</div>
+</div>
+<p>Now, we can optimize the same problem!
+The optimization details are set under the <code class="docutils literal notranslate"><span class="pre">analysis_options</span></code> header in <code class="docutils literal notranslate"><span class="pre">inputs/ard_system.yaml</span></code>.
+Here, we use a four-dimensional rectilinear layout parameterization (<span class="math notranslate nohighlight">\(\theta\)</span>) as design variables, constrain the farm such that the turbines are in the boundaries and satisfactorily spaced, and then we optimize for LCOE.
+$<span class="math notranslate nohighlight">\(
+\begin{aligned}
+\textrm{minimize}_\theta \quad &amp; \mathrm{LCOE}(\theta, \ldots) \\
+\textrm{subject to} \quad &amp; f_{\mathrm{spacing}}(\theta, \ldots) &lt; 0 \\
+                          &amp; f_{\mathrm{boundary}}(\theta, \ldots) &lt; 0
+\end{aligned}
+\)</span>$</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">optimize</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># set to False to skip optimization</span>
+<span class="k">if</span> <span class="n">optimize</span><span class="p">:</span>
+    <span class="c1"># run the optimization</span>
+    <span class="n">prob</span><span class="o">.</span><span class="n">run_driver</span><span class="p">()</span>
+    <span class="n">prob</span><span class="o">.</span><span class="n">cleanup</span><span class="p">()</span>
+
+    <span class="c1"># collapse the test result data</span>
+    <span class="n">test_data</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;AEP_val&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">get_val</span><span class="p">(</span><span class="s2">&quot;AEP_farm&quot;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;GW*h&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]),</span>
+        <span class="s2">&quot;CapEx_val&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">get_val</span><span class="p">(</span><span class="s2">&quot;tcc.tcc&quot;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;MUSD&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]),</span>
+        <span class="s2">&quot;BOS_val&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">get_val</span><span class="p">(</span><span class="s2">&quot;landbosse.total_capex&quot;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;MUSD&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]),</span>
+        <span class="s2">&quot;OpEx_val&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">get_val</span><span class="p">(</span><span class="s2">&quot;opex.opex&quot;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;MUSD/yr&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]),</span>
+        <span class="s2">&quot;LCOE_val&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">get_val</span><span class="p">(</span><span class="s2">&quot;financese.lcoe&quot;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;USD/MW/h&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]),</span>
+        <span class="s2">&quot;area_tight&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">get_val</span><span class="p">(</span><span class="s2">&quot;landuse.area_tight&quot;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;km**2&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]),</span>
+        <span class="s2">&quot;coll_length&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span>
+            <span class="n">prob</span><span class="o">.</span><span class="n">get_val</span><span class="p">(</span><span class="s2">&quot;collection.total_length_cables&quot;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;km&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;turbine_spacing&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">get_val</span><span class="p">(</span><span class="s2">&quot;spacing_constraint.turbine_spacing&quot;</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;km&quot;</span><span class="p">))</span>
+        <span class="p">),</span>
+    <span class="p">}</span>
+
+    <span class="c1"># clean up the recorder</span>
+    <span class="n">prob</span><span class="o">.</span><span class="n">cleanup</span><span class="p">()</span>
+
+    <span class="c1"># print the results</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">RESULTS (opt):</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">pp</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">test_data</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|0
+---------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([0.]),
+ &#39;angle_skew&#39;: array([0.]),
+ &#39;spacing_primary&#39;: array([7.]),
+ &#39;spacing_secondary&#39;: array([7.])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03727499])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|1
+---------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([0.]),
+ &#39;angle_skew&#39;: array([0.]),
+ &#39;spacing_primary&#39;: array([7.]),
+ &#39;spacing_secondary&#39;: array([7.])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03727499])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|2
+---------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([0.]),
+ &#39;angle_skew&#39;: array([0.]),
+ &#39;spacing_primary&#39;: array([9.]),
+ &#39;spacing_secondary&#39;: array([7.])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03624933])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|3
+---------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([0.]),
+ &#39;angle_skew&#39;: array([0.]),
+ &#39;spacing_primary&#39;: array([9.]),
+ &#39;spacing_secondary&#39;: array([9.])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03617557])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|4
+---------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([2.]),
+ &#39;angle_skew&#39;: array([0.]),
+ &#39;spacing_primary&#39;: array([9.]),
+ &#39;spacing_secondary&#39;: array([9.])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03584399])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|5
+---------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([2.]),
+ &#39;angle_skew&#39;: array([2.]),
+ &#39;spacing_primary&#39;: array([9.]),
+ &#39;spacing_secondary&#39;: array([9.])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03571624])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|6
+---------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([2.86472422]),
+ &#39;angle_skew&#39;: array([0.06259609]),
+ &#39;spacing_primary&#39;: array([9.88434648]),
+ &#39;spacing_secondary&#39;: array([7.42956533])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03531045])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|7
+---------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([6.22500558]),
+ &#39;angle_skew&#39;: array([1.28475695]),
+ &#39;spacing_primary&#39;: array([11.09633061]),
+ &#39;spacing_secondary&#39;: array([6.10823022])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03366195])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|8
+---------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.8188138]),
+ &#39;angle_skew&#39;: array([5.39822071]),
+ &#39;spacing_primary&#39;: array([10.77914966]),
+ &#39;spacing_secondary&#39;: array([4.23726647])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03365144])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|9
+---------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([16.24070021]),
+ &#39;angle_skew&#39;: array([7.16094224]),
+ &#39;spacing_primary&#39;: array([9.69137175]),
+ &#39;spacing_secondary&#39;: array([4.22159923])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03447578])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|10
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.98084146]),
+ &#39;angle_skew&#39;: array([5.51115844]),
+ &#39;spacing_primary&#39;: array([11.46172858]),
+ &#39;spacing_secondary&#39;: array([4.94088435])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03364587])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|11
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.12680988]),
+ &#39;angle_skew&#39;: array([4.10902787]),
+ &#39;spacing_primary&#39;: array([11.12905245]),
+ &#39;spacing_secondary&#39;: array([4.23151744])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.0337512])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|12
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.97886628]),
+ &#39;angle_skew&#39;: array([5.4994141]),
+ &#39;spacing_primary&#39;: array([11.45685172]),
+ &#39;spacing_secondary&#39;: array([3.52672934])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03461958])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|13
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([11.83487874]),
+ &#39;angle_skew&#39;: array([5.75795818]),
+ &#39;spacing_primary&#39;: array([9.65170261]),
+ &#39;spacing_secondary&#39;: array([5.51449937])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03364335])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|14
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.16898762]),
+ &#39;angle_skew&#39;: array([4.76502336]),
+ &#39;spacing_primary&#39;: array([9.57983731]),
+ &#39;spacing_secondary&#39;: array([7.21664128])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03342139])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|15
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([10.67880208]),
+ &#39;angle_skew&#39;: array([4.94018228]),
+ &#39;spacing_primary&#39;: array([9.27798316]),
+ &#39;spacing_secondary&#39;: array([8.5041002])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03416405])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|16
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([13.76846398]),
+ &#39;angle_skew&#39;: array([4.38222082]),
+ &#39;spacing_primary&#39;: array([8.45526817]),
+ &#39;spacing_secondary&#39;: array([7.04205081])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03368136])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|17
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.67100257]),
+ &#39;angle_skew&#39;: array([5.24999177]),
+ &#39;spacing_primary&#39;: array([10.23189542]),
+ &#39;spacing_secondary&#39;: array([7.51262583])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03344797])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|18
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.07499064]),
+ &#39;angle_skew&#39;: array([4.63840234]),
+ &#39;spacing_primary&#39;: array([9.76792798]),
+ &#39;spacing_secondary&#39;: array([7.16916933])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03345668])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|19
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.58083851]),
+ &#39;angle_skew&#39;: array([4.54197387]),
+ &#39;spacing_primary&#39;: array([9.42987515]),
+ &#39;spacing_secondary&#39;: array([7.12642418])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03341448])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|20
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.59383898]),
+ &#39;angle_skew&#39;: array([4.56753075]),
+ &#39;spacing_primary&#39;: array([9.29318234]),
+ &#39;spacing_secondary&#39;: array([7.26957763])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03343148])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|21
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.52896098]),
+ &#39;angle_skew&#39;: array([4.50693903]),
+ &#39;spacing_primary&#39;: array([9.36829045]),
+ &#39;spacing_secondary&#39;: array([7.0785848])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03341592])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|22
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.63617789]),
+ &#39;angle_skew&#39;: array([4.68830551]),
+ &#39;spacing_primary&#39;: array([9.40994569]),
+ &#39;spacing_secondary&#39;: array([7.0034306])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03342765])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|23
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.66133043]),
+ &#39;angle_skew&#39;: array([4.49126992]),
+ &#39;spacing_primary&#39;: array([9.40673002]),
+ &#39;spacing_secondary&#39;: array([7.10606582])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03341513])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|24
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.53477746]),
+ &#39;angle_skew&#39;: array([4.42479964]),
+ &#39;spacing_primary&#39;: array([9.58450624]),
+ &#39;spacing_secondary&#39;: array([7.11100332])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03342918])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|25
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.58302915]),
+ &#39;angle_skew&#39;: array([4.54437633]),
+ &#39;spacing_primary&#39;: array([9.37672587]),
+ &#39;spacing_secondary&#39;: array([7.21106805])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03341496])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|26
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.5681645]),
+ &#39;angle_skew&#39;: array([4.50892582]),
+ &#39;spacing_primary&#39;: array([9.4607693]),
+ &#39;spacing_secondary&#39;: array([7.14353405])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03341458])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|27
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.58101213]),
+ &#39;angle_skew&#39;: array([4.54295524]),
+ &#39;spacing_primary&#39;: array([9.43553028]),
+ &#39;spacing_secondary&#39;: array([7.11823723])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03341537])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|28
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.58132973]),
+ &#39;angle_skew&#39;: array([4.5427964]),
+ &#39;spacing_primary&#39;: array([9.42046891]),
+ &#39;spacing_secondary&#39;: array([7.14404817])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03341307])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|29
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.5827968]),
+ &#39;angle_skew&#39;: array([4.54606176]),
+ &#39;spacing_primary&#39;: array([9.4028926]),
+ &#39;spacing_secondary&#39;: array([7.17980091])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03341186])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|30
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.58885698]),
+ &#39;angle_skew&#39;: array([4.57619674]),
+ &#39;spacing_primary&#39;: array([9.395823]),
+ &#39;spacing_secondary&#39;: array([7.20440128])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.0334133])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|31
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.57312672]),
+ &#39;angle_skew&#39;: array([4.54807807]),
+ &#39;spacing_primary&#39;: array([9.4014217]),
+ &#39;spacing_secondary&#39;: array([7.17929045])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03341195])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|32
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.58447068]),
+ &#39;angle_skew&#39;: array([4.53425544]),
+ &#39;spacing_primary&#39;: array([9.38686257]),
+ &#39;spacing_secondary&#39;: array([7.17888061])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03341229])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|33
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.58027608]),
+ &#39;angle_skew&#39;: array([4.53852611]),
+ &#39;spacing_primary&#39;: array([9.40799017]),
+ &#39;spacing_secondary&#39;: array([7.18309859])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03341181])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|34
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.58409712]),
+ &#39;angle_skew&#39;: array([4.54557748]),
+ &#39;spacing_primary&#39;: array([9.4140551]),
+ &#39;spacing_secondary&#39;: array([7.20038715])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03341276])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|35
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.58144469]),
+ &#39;angle_skew&#39;: array([4.53560407]),
+ &#39;spacing_primary&#39;: array([9.41808139]),
+ &#39;spacing_secondary&#39;: array([7.16612028])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03341208])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|36
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.57230438]),
+ &#39;angle_skew&#39;: array([4.53267257]),
+ &#39;spacing_primary&#39;: array([9.40836324]),
+ &#39;spacing_secondary&#39;: array([7.18452994])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03341189])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|37
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.57964711]),
+ &#39;angle_skew&#39;: array([4.53972085]),
+ &#39;spacing_primary&#39;: array([9.4098988]),
+ &#39;spacing_secondary&#39;: array([7.18398409])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03341177])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|38
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.5814228]),
+ &#39;angle_skew&#39;: array([4.54107468]),
+ &#39;spacing_primary&#39;: array([9.41179012]),
+ &#39;spacing_secondary&#39;: array([7.18803835])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03341173])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|39
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.58274736]),
+ &#39;angle_skew&#39;: array([4.54181979]),
+ &#39;spacing_primary&#39;: array([9.41634621]),
+ &#39;spacing_secondary&#39;: array([7.18664825])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03341173])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|40
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.58422183]),
+ &#39;angle_skew&#39;: array([4.54177433]),
+ &#39;spacing_primary&#39;: array([9.41646606]),
+ &#39;spacing_secondary&#39;: array([7.18799343])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.0334117])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|41
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.5852452]),
+ &#39;angle_skew&#39;: array([4.54279463]),
+ &#39;spacing_primary&#39;: array([9.41658817]),
+ &#39;spacing_secondary&#39;: array([7.18937067])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03341172])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|42
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.58361397]),
+ &#39;angle_skew&#39;: array([4.5414975]),
+ &#39;spacing_primary&#39;: array([9.4168773]),
+ &#39;spacing_secondary&#39;: array([7.18861371])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03341172])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|43
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.58561055]),
+ &#39;angle_skew&#39;: array([4.54054279]),
+ &#39;spacing_primary&#39;: array([9.41612098]),
+ &#39;spacing_secondary&#39;: array([7.18733333])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.0334117])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|44
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.58730327]),
+ &#39;angle_skew&#39;: array([4.53965512]),
+ &#39;spacing_primary&#39;: array([9.41588682]),
+ &#39;spacing_secondary&#39;: array([7.18679308])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03341175])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|45
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.58565758]),
+ &#39;angle_skew&#39;: array([4.54042612]),
+ &#39;spacing_primary&#39;: array([9.41710902]),
+ &#39;spacing_secondary&#39;: array([7.18724415])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03341173])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|46
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.58482946]),
+ &#39;angle_skew&#39;: array([4.53924741]),
+ &#39;spacing_primary&#39;: array([9.4157545]),
+ &#39;spacing_secondary&#39;: array([7.18858936])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03341171])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|47
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.58490655]),
+ &#39;angle_skew&#39;: array([4.54079423]),
+ &#39;spacing_primary&#39;: array([9.41564094]),
+ &#39;spacing_secondary&#39;: array([7.18687427])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03341171])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|48
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.58554635]),
+ &#39;angle_skew&#39;: array([4.54072261]),
+ &#39;spacing_primary&#39;: array([9.41615941]),
+ &#39;spacing_secondary&#39;: array([7.18749008])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03341173])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|49
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.5858588]),
+ &#39;angle_skew&#39;: array([4.54023968]),
+ &#39;spacing_primary&#39;: array([9.41593213]),
+ &#39;spacing_secondary&#39;: array([7.18708669])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.0334117])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Driver debug print for iter coord: rank0:ScipyOptimize_COBYLA|50
+----------------------------------------------------------------
+Design Vars
+{&#39;angle_orientation&#39;: array([12.58621218]),
+ &#39;angle_skew&#39;: array([4.54032343]),
+ &#39;spacing_primary&#39;: array([9.4156105]),
+ &#39;spacing_secondary&#39;: array([7.18720779])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Objectives
+{&#39;financese.lcoe&#39;: array([0.03341175])}
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Return from COBYLA because the objective function has been evaluated MAXFUN times.
+Number of function values = 50   Least value of F = 0.03341169675962258   Constraint violation = 0.0
+The corresponding X is:
+[ 9.41593213  7.18708669 12.5858588   4.54023968]
+The constraint value is:
+[-6.41593213e+00 -4.18708669e+00 -1.92585859e+02 -4.95402397e+01
+ -1.05840679e+01 -1.28129133e+01 -1.67414141e+02 -4.04597603e+01
+ -4.77756110e-01 -1.88373096e+00 -2.41718701e+00 -1.73759062e+00
+ -1.17366211e-01 -1.35414747e+00 -3.42085848e+00 -4.20859351e+00
+ -3.05868311e+00 -6.69368164e-01 -1.22137012e+00 -3.61068506e+00
+ -5.99999604e+00 -3.61068506e+00 -1.22137012e+00 -6.69368164e-01
+ -3.05868311e+00 -4.20859351e+00 -3.42085848e+00 -1.35414747e+00
+ -1.17366211e-01 -1.73759062e+00 -2.41718701e+00 -1.88373096e+00
+ -4.77756110e-01 -6.72071177e-01 -1.89614235e+00 -3.12021353e+00
+ -4.34428471e+00 -3.85262413e-01 -9.29612680e-01 -1.99919422e+00
+ -3.16535231e+00 -4.35977412e+00 -1.32252483e+00 -1.60413629e+00
+ -2.41122536e+00 -3.43663208e+00 -4.55038843e+00 -2.25978724e+00
+ -2.42450683e+00 -3.02706954e+00 -3.89283804e+00 -4.89778276e+00
+ -3.19704965e+00 -3.29860823e+00 -3.76027257e+00 -4.48396130e+00
+ -5.37445072e+00 -6.72071177e-01 -1.89614235e+00 -3.12021353e+00
+ -1.04751431e+00 -3.85262413e-01 -9.29612680e-01 -1.99919422e+00
+ -3.16535231e+00 -1.76650458e+00 -1.32252483e+00 -1.60413629e+00
+ -2.41122536e+00 -3.43663208e+00 -2.60226736e+00 -2.25978724e+00
+ -2.42450683e+00 -3.02706954e+00 -3.89283804e+00 -3.48288083e+00
+ -3.19704965e+00 -3.29860823e+00 -3.76027257e+00 -4.48396130e+00
+ -6.72071177e-01 -1.89614235e+00 -2.13782001e+00 -1.04751431e+00
+ -3.85262413e-01 -9.29612680e-01 -1.99919422e+00 -2.64702862e+00
+ -1.76650458e+00 -1.32252483e+00 -1.60413629e+00 -2.41122536e+00
+ -3.31960925e+00 -2.60226736e+00 -2.25978724e+00 -2.42450683e+00
+ -3.02706954e+00 -4.08500915e+00 -3.48288083e+00 -3.19704965e+00
+ -3.29860823e+00 -3.76027257e+00 -6.72071177e-01 -3.30915499e+00
+ -2.13782001e+00 -1.04751431e+00 -3.85262413e-01 -9.29612680e-01
+ -3.70109361e+00 -2.64702862e+00 -1.76650458e+00 -1.32252483e+00
+ -1.60413629e+00 -4.24654293e+00 -3.31960925e+00 -2.60226736e+00
+ -2.25978724e+00 -2.42450683e+00 -4.89961856e+00 -4.08500915e+00
+ -3.48288083e+00 -3.19704965e+00 -3.29860823e+00 -4.50552949e+00
+ -3.30915499e+00 -2.13782001e+00 -1.04751431e+00 -3.85262413e-01
+ -4.82764003e+00 -3.70109361e+00 -2.64702862e+00 -1.76650458e+00
+ -1.32252483e+00 -5.28404068e+00 -4.24654293e+00 -3.31960925e+00
+ -2.60226736e+00 -2.25978724e+00 -5.84605724e+00 -4.89961856e+00
+ -4.08500915e+00 -3.48288083e+00 -3.19704965e+00 -6.72071177e-01
+ -1.89614235e+00 -3.12021353e+00 -4.34428471e+00 -3.85262413e-01
+ -9.29612680e-01 -1.99919422e+00 -3.16535231e+00 -4.35977412e+00
+ -1.32252483e+00 -1.60413629e+00 -2.41122536e+00 -3.43663208e+00
+ -4.55038843e+00 -2.25978724e+00 -2.42450683e+00 -3.02706954e+00
+ -3.89283804e+00 -4.89778276e+00 -6.72071177e-01 -1.89614235e+00
+ -3.12021353e+00 -1.04751431e+00 -3.85262413e-01 -9.29612680e-01
+ -1.99919422e+00 -3.16535231e+00 -1.76650458e+00 -1.32252483e+00
+ -1.60413629e+00 -2.41122536e+00 -3.43663208e+00 -2.60226736e+00
+ -2.25978724e+00 -2.42450683e+00 -3.02706954e+00 -3.89283804e+00
+ -6.72071177e-01 -1.89614235e+00 -2.13782001e+00 -1.04751431e+00
+ -3.85262413e-01 -9.29612680e-01 -1.99919422e+00 -2.64702862e+00
+ -1.76650458e+00 -1.32252483e+00 -1.60413629e+00 -2.41122536e+00
+ -3.31960925e+00 -2.60226736e+00 -2.25978724e+00 -2.42450683e+00
+ -3.02706954e+00 -6.72071177e-01 -3.30915499e+00 -2.13782001e+00
+ -1.04751431e+00 -3.85262413e-01 -9.29612680e-01 -3.70109361e+00
+ -2.64702862e+00 -1.76650458e+00 -1.32252483e+00 -1.60413629e+00
+ -4.24654293e+00 -3.31960925e+00 -2.60226736e+00 -2.25978724e+00
+ -2.42450683e+00 -4.50552949e+00 -3.30915499e+00 -2.13782001e+00
+ -1.04751431e+00 -3.85262413e-01 -4.82764003e+00 -3.70109361e+00
+ -2.64702862e+00 -1.76650458e+00 -1.32252483e+00 -5.28404068e+00
+ -4.24654293e+00 -3.31960925e+00 -2.60226736e+00 -2.25978724e+00
+ -6.72071177e-01 -1.89614235e+00 -3.12021353e+00 -4.34428471e+00
+ -3.85262413e-01 -9.29612680e-01 -1.99919422e+00 -3.16535231e+00
+ -4.35977412e+00 -1.32252483e+00 -1.60413629e+00 -2.41122536e+00
+ -3.43663208e+00 -4.55038843e+00 -6.72071177e-01 -1.89614235e+00
+ -3.12021353e+00 -1.04751431e+00 -3.85262413e-01 -9.29612680e-01
+ -1.99919422e+00 -3.16535231e+00 -1.76650458e+00 -1.32252483e+00
+ -1.60413629e+00 -2.41122536e+00 -3.43663208e+00 -6.72071177e-01
+ -1.89614235e+00 -2.13782001e+00 -1.04751431e+00 -3.85262413e-01
+ -9.29612680e-01 -1.99919422e+00 -2.64702862e+00 -1.76650458e+00
+ -1.32252483e+00 -1.60413629e+00 -2.41122536e+00 -6.72071177e-01
+ -3.30915499e+00 -2.13782001e+00 -1.04751431e+00 -3.85262413e-01
+ -9.29612680e-01 -3.70109361e+00 -2.64702862e+00 -1.76650458e+00
+ -1.32252483e+00 -1.60413629e+00 -4.50552949e+00 -3.30915499e+00
+ -2.13782001e+00 -1.04751431e+00 -3.85262413e-01 -4.82764003e+00
+ -3.70109361e+00 -2.64702862e+00 -1.76650458e+00 -1.32252483e+00
+ -6.72071177e-01 -1.89614235e+00 -3.12021353e+00 -4.34428471e+00
+ -3.85262413e-01 -9.29612680e-01 -1.99919422e+00 -3.16535231e+00
+ -4.35977412e+00 -6.72071177e-01 -1.89614235e+00 -3.12021353e+00
+ -1.04751431e+00 -3.85262413e-01 -9.29612680e-01 -1.99919422e+00
+ -3.16535231e+00 -6.72071177e-01 -1.89614235e+00 -2.13782001e+00
+ -1.04751431e+00 -3.85262413e-01 -9.29612680e-01 -1.99919422e+00
+ -6.72071177e-01 -3.30915499e+00 -2.13782001e+00 -1.04751431e+00
+ -3.85262413e-01 -9.29612680e-01 -4.50552949e+00 -3.30915499e+00
+ -2.13782001e+00 -1.04751431e+00 -3.85262413e-01 -6.72071177e-01
+ -1.89614235e+00 -3.12021353e+00 -4.34428471e+00 -6.72071177e-01
+ -1.89614235e+00 -3.12021353e+00 -6.72071177e-01 -1.89614235e+00
+ -6.72071177e-01]
+
+Optimization FAILED.
+Return from COBYLA because the objective function has been evaluated MAXFUN times.
+-----------------------------------
+</pre></div>
+</div>
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>RESULTS (opt):
+
+{&#39;AEP_val&#39;: 454.39511994938914,
+ &#39;BOS_val&#39;: 42.06178913036275,
+ &#39;CapEx_val&#39;: 110.5,
+ &#39;LCOE_val&#39;: 33.4117456773484,
+ &#39;OpEx_val&#39;: 3.7400000000000007,
+ &#39;area_tight&#39;: 18.298495051357502,
+ &#39;coll_length&#39;: 24.299823629499816,
+ &#39;turbine_spacing&#39;: 0.9372783145445399}
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_layout</span><span class="p">(</span>
+    <span class="n">prob</span><span class="p">,</span>
+    <span class="n">input_dict</span><span class="o">=</span><span class="n">input_dict</span><span class="p">,</span>
+    <span class="n">show_image</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">include_cable_routing</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../../_images/3bcd7339e083b8fe8d23d2508fb1b1eb687666bd0f9c9522ca10282b266f300f.png" src="../../_images/3bcd7339e083b8fe8d23d2508fb1b1eb687666bd0f9c9522ca10282b266f300f.png" />
+</div>
+</div>
+<p>The result: a farm that fits in a stop-sign domain and minimzes the LCOE.</p>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./examples/01_onshore"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../../testing.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Unit and system testing</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../02_offshore_fixed/optimization_demo.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">02: Monopile</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By National Renewable Energy Laboratory
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
