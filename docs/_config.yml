@@ -13,7 +13,7 @@ copyright: '2024'
 # See https://jupyterbook.org/content/execute.html
 execute:
   execute_notebooks: auto
-  timeout: 180
+  timeout: 240  # 180
   # timeout: 420 # Give each notebook cell 7 minutes to execute
 
 # Define the name of the latex output file for PDF builds
