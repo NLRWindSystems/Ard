@@ -165,10 +165,10 @@ def set_up_system_recursive(
     # Add subsystems directly from the input dictionary
     if hasattr(parent_group, "name") and (parent_group.name != ""):
         print(
-            f"{''.join(['\t' for _ in range(_depth)])}Adding {system_name} to {parent_group.name}."
+            f"{''.join(' ' * 4 * _depth)}Adding {system_name} to {parent_group.name}."
         )
     else:
-        print(f"{''.join(['\t' for _ in range(_depth)])}Adding {system_name}.")
+        print(f"{''.join(' ' * 4 * _depth)}Adding {system_name}.")
     if "systems" in input_dict:  # Recursively add nested subsystems]
         if _depth > 0:
             group = parent_group.add_subsystem(
@@ -188,7 +188,8 @@ def set_up_system_recursive(
                 _depth=_depth + 1,
             )
         if "approx_totals" in input_dict:
-            print(f"\tActivating approximate totals on {system_name}")
+            prefix = "\t"
+            print(prefix + f"Activating approximate totals on {system_name}")
             group.approx_totals(**input_dict["approx_totals"])
 
     else:
