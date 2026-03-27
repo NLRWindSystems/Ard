@@ -63,6 +63,12 @@ def _make_aep_modeling_options():
         wind_speeds=speeds,
         ti_table=0.06,
     )
+
+    turbine["rated_power"] = 3.4e6
+    turbine["rated_wind_speed"] = 9.8
+    turbine["cutin_wind_speed"] = 3.0
+    turbine["cutout_wind_speed"] = 25.0
+
     return {
         "windIO_plant": {
             "wind_farm": {"name": "integration test farm", "turbine": turbine},
@@ -87,6 +93,13 @@ def _make_aep_modeling_options():
         },
         "layout": {"N_turbines": n_side**2},
         "aero": {"return_turbine_output": True},
+        "flowfarm": {
+            "wake_deficit_model": "GaussYawVariableSpread",
+            "wake_deflection_model": "GaussYawVariableSpreadDeflection",
+            "wake_combination_model": "LinearLocalVelocitySuperposition",
+            "local_turbulence_model": "LocalTIModelNoLocalTI",
+            "tolerance": 1e-16,
+        },
     }
 
 
