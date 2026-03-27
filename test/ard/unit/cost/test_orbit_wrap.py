@@ -378,8 +378,8 @@ class TestORBITNoApproxBranch:
 
         prob.run_model()
 
-        bos_capex = float(prob.get_val("orbit.bos_capex", units="MUSD"))
-        total_capex = float(prob.get_val("orbit.total_capex", units="MUSD"))
+        bos_capex = float(prob.get_val("orbit.bos_capex", units="MUSD")[0])
+        total_capex = float(prob.get_val("orbit.total_capex", units="MUSD")[0])
 
         bos_capex_ref = 477.3328175080761
         total_capex_ref = 727.9128175080762
@@ -581,8 +581,8 @@ class TestORBITApproxBranch:
 
         self.prob.run_model()
 
-        bos_capex = float(self.prob.get_val("orbit.bos_capex", units="MUSD"))
-        total_capex = float(self.prob.get_val("orbit.total_capex", units="MUSD"))
+        bos_capex = float(self.prob.get_val("orbit.bos_capex", units="MUSD")[0])
+        total_capex = float(self.prob.get_val("orbit.total_capex", units="MUSD")[0])
 
         bos_capex_ref = 477.3328175080761
         total_capex_ref = 727.9128175080762
