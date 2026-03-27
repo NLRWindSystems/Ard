@@ -84,7 +84,7 @@ jobs:
         pip install .[dev]
     - name: Run unit tests with coverage
       run: |
-        pytest --cov=ard --cov-fail-under=80 test/ard/unit
+        pytest --cov=ard --cov-fail-under=80 test/ard/unit test/flowfarm/unit -m "not julia"
 
   test-system:
     name: Run system tests

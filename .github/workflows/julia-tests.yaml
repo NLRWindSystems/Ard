@@ -1,0 +1,52 @@
+name: FLOWFarm integration tests (Julia)
+
+on:
+  push:
+    paths:
+      - "ard/flowfarm/**"
+      - "ard/farm_aero/flowfarm.py"
+      - "test/flowfarm/**"
+  pull_request:
+    paths:
+      - "ard/flowfarm/**"
+      - "ard/farm_aero/flowfarm.py"
+      - "test/flowfarm/**"
+  workflow_dispatch:  # allow manual runs from the Actions UI
+
+jobs:
+
+  test-julia:
+    name: Run FLOWFarm integration tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Set up Julia
+      uses: julia-actions/setup-julia@v2
+      with:
+        version: "1"  # latest stable 1.x
+
+    - name: Cache Julia packages
+      uses: julia-actions/cache@v2
+
+    - name: Install Ard with FLOWFarm extras
+      run: pip install ".[dev,flowfarm]"
+
+    - name: Pre-instantiate Julia environment
+      run: |
+        julia -e "using Pkg; Pkg.Registry.add(\"General\"); Pkg.Registry.update()"
+        julia --project=ard/flowfarm/julia_env -e "using Pkg; Pkg.resolve(); Pkg.instantiate()"
+
+    - name: Run FLOWFarm integration tests
+      run: |
+        pytest -m julia test/flowfarm/integration \
+          --cov=ard \
+          --cov-report=term-missing \
+          -v
