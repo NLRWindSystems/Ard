@@ -235,7 +235,7 @@ class FLOWFarmComponent:
         )
 
         self._cached_sparse_x = x_eval_np.copy()
-        self._cached_sparse_aep = float(aep_val)
+        self._cached_sparse_aep = float(np.asarray(aep_val).ravel()[0])
         self._cached_sparse_grad = np.asarray(grad_val).ravel().copy()
 
     def _evaluate_farm(self, x_eval_np):
@@ -254,7 +254,7 @@ class FLOWFarmComponent:
         aep_val = calculate_aep_bang(self.farm, x_eval)
 
         self._cached_farm_x = x_eval_np.copy()
-        self._cached_farm_aep = float(aep_val)
+        self._cached_farm_aep = float(np.asarray(aep_val).ravel()[0])
 
     def _compute_aep(self, inputs, outputs):
         """Compute farm AEP using regular calculate_aep!(farm, x)."""
