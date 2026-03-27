@@ -47,6 +47,10 @@ def _load_turbine_yaml():
         return yaml.safe_load(f)
 
 
+def _as_scalar(value):
+    return float(np.asarray(value).ravel()[0])
+
+
 def _make_aep_modeling_options():
     import floris
 
@@ -148,13 +152,13 @@ class TestFLOWFarmAEPIntegration:
     def test_compute_returns_positive_aep(self):
         self.prob.run_model()
         aep = self.prob.get_val("aepFLOWFarm.AEP_farm")
-        assert float(aep) > 0.0
+        assert _as_scalar(aep) > 0.0
 
     def test_compute_aep_consistent_on_repeated_calls(self):
         self.prob.run_model()
-        aep1 = float(self.prob.get_val("aepFLOWFarm.AEP_farm"))
+        aep1 = _as_scalar(self.prob.get_val("aepFLOWFarm.AEP_farm"))
         self.prob.run_model()
-        aep2 = float(self.prob.get_val("aepFLOWFarm.AEP_farm"))
+        aep2 = _as_scalar(self.prob.get_val("aepFLOWFarm.AEP_farm"))
         assert aep1 == pytest.approx(aep2, rel=1e-10)
 
     def test_partials_check(self):
@@ -176,14 +180,14 @@ class TestFLOWFarmAEPIntegration:
     def test_aep_decreases_with_closer_spacing(self):
         """AEP should be lower for a tighter layout due to increased wake losses."""
         self.prob.run_model()
-        aep_spread = float(self.prob.get_val("aepFLOWFarm.AEP_farm"))
+        aep_spread = _as_scalar(self.prob.get_val("aepFLOWFarm.AEP_farm"))
 
         n_side = 3
         X_tight, Y_tight = _grid_layout(n_side, 2.0, _ROTOR_DIAMETER)  # 2D spacing
         self.prob.set_val("aepFLOWFarm.x_turbines", X_tight)
         self.prob.set_val("aepFLOWFarm.y_turbines", Y_tight)
         self.prob.run_model()
-        aep_tight = float(self.prob.get_val("aepFLOWFarm.AEP_farm"))
+        aep_tight = _as_scalar(self.prob.get_val("aepFLOWFarm.AEP_farm"))
 
         assert aep_tight < aep_spread
 
