@@ -10,7 +10,7 @@ modeling_options:
           - x: [5.0, 5.0, -5.0, -5.0]
       energy_resource:
         name: "LB system test resource"
-        wind_resource: !include ../../../../../examples/data/windIO-plant_wind-resource_wrg-example.yaml
+        wind_resource: !include ../../../../../examples/ard/data/windIO-plant_wind-resource_wrg-example.yaml
     wind_farm:
       name: "LB system test farm"
       layouts:
@@ -29,7 +29,7 @@ modeling_options:
             0.0, 0.0, 0.0, 0.0, 0.0,
             0.0, 0.0, 0.0, 0.0, 0.0,
           ]
-      turbine: !include ../../../../../examples/data/windIO-plant_turbine_IEA-3.4MW-130m-RWT.yaml
+      turbine: !include ../../../../../examples/ard/data/windIO-plant_turbine_IEA-3.4MW-130m-RWT.yaml
       electrical_substations:
         - electrical_substation:
             coordinates:

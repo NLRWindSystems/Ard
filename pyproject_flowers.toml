@@ -1,0 +1,57 @@
+
+# Project configuration for FLOWERS
+# TOML spec: https://toml.io/en/v1.0.0
+
+[build-system]
+requires = [
+  "setuptools",
+]
+build-backend = "setuptools.build_meta"
+
+# https://setuptools.pypa.io/en/latest/userguide/package_discovery.html
+[tool.setuptools]
+packages = ["flowers"]
+
+[project]
+name = "FLOWERS"
+version = "1.0.0-alpha0"
+authors = [
+]
+description = "A package for rapid energy simulation of wind farms"
+readme= "README.md"
+requires-python = ">=3.10, <3.13"
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  # "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+  "numpy",
+  "matplotlib",
+  "scipy",
+  "pandas",
+  "shapely",
+]
+[project.optional-dependencies]
+dev = [
+  "black",
+  "pytest",
+  "pytest-cov",
+]
+docs = [
+  "pyxdsm",
+  "jupyter-book",
+  "sphinx-book-theme",
+  "sphinx-autodoc-typehints",
+]
+[project.urls]
+# Homepage = "https://example.com"
+Documentation = "https://wisdem.github.io/flowers"
+Repository = "https://github.com/wisdem/flowers.git"
+Issues = "https://github.com/wisdem/flowers/issues"
+# Changelog = "https://github.com/wisdem/flowers/blob/main/CHANGELOG.md"
