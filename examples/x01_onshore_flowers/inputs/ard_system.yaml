@@ -1,0 +1,201 @@
+modeling_options: &modeling_options
+  windIO_plant: !include windio.yaml
+  layout:
+    type: "gridfarm"
+    N_turbines: 25
+    N_substations: 1
+    spacing_primary: 7.0
+    spacing_secondary: 7.0
+    angle_orientation: 0.0
+    angle_skew: 0.0
+  # floris:
+  #   peak_shaving_fraction: 0.2
+  #   peak_shaving_TI_threshold: 0.0
+  flowers:
+    num_terms: 0
+    k: 0.05
+    # turbine: "nrel_5MW"
+  collection:
+    max_turbines_per_string: 8
+    solver_name: "highs"
+    solver_options:
+      time_limit: 60
+      mip_gap: 0.02
+    model_options:
+      topology: "radial"  # "radial", "branched"
+      feeder_route: "segmented"
+      feeder_limit: "unlimited"
+  offshore: false
+  floating: false
+  costs:
+    rated_power: 3400000.0  # W
+    num_blades: 3
+    rated_thrust_N: 645645.83964671
+    gust_velocity_m_per_s: 52.5
+    blade_surface_area: 69.7974979
+    tower_mass: 620.4407337521
+    nacelle_mass: 101.98582836439
+    hub_mass: 8.38407517646
+    blade_mass: 14.56341339641
+    foundation_height: 0.0
+    commissioning_cost_kW: 44.0
+    decommissioning_cost_kW: 58.0
+    trench_len_to_substation_km: 50.0
+    distance_to_interconnect_mi: 4.97096954
+    interconnect_voltage_kV: 130.0
+    tcc_per_kW: 1300.00  # (USD/kW)
+    opex_per_kW: 44.00  # (USD/kWh)
+
+system:
+  type: group
+  systems:
+    layout2aep:
+      type: group
+      promotes: ["*"]
+      # approx_totals:
+      #   method: "fd"
+      #   step: 1.0E-3
+      #   form: "central"
+      #   step_calc: "rel_avg"
+      systems:
+        layout:
+          type: component
+          module: ard.layout.gridfarm
+          object: GridFarmLayout
+          promotes: ["*"]
+          kwargs:
+            modeling_options: *modeling_options
+        aepFLOWERS:
+          type: component
+          module: ard.farm_aero.flowers
+          object: FLOWERSAEP
+          promotes: ["x_turbines", "y_turbines", "AEP_farm"]
+          kwargs:
+            modeling_options: *modeling_options
+        aepFLORIS:
+          type: component
+          module: ard.farm_aero.floris
+          object: FLORISAEP
+          promotes: ["x_turbines", "y_turbines", ["AEP_farm", "AEP_FLORIS"]]
+          kwargs:
+            modeling_options: *modeling_options
+            data_path:
+            case_title: "default"
+    boundary:
+      type: component
+      module: ard.layout.boundary
+      object: FarmBoundaryDistancePolygon
+      promotes: ["*"]
+      kwargs:
+        modeling_options: *modeling_options
+    landuse:
+      type: component
+      module: ard.layout.gridfarm
+      object: GridFarmLanduse
+      promotes: ["*"]
+      kwargs:
+        modeling_options: *modeling_options
+    collection:
+      type: component
+      module: ard.collection.optiwindnet_wrap
+      object: OptiwindnetCollection
+      promotes: ["*"]
+      kwargs:
+        modeling_options: *modeling_options
+    spacing_constraint:
+      type: component
+      module: ard.layout.spacing
+      object: TurbineSpacing
+      promotes: ["*"]
+      kwargs:
+        modeling_options: *modeling_options
+    tcc:
+      type: component
+      module: ard.cost.wisdem_wrap
+      object: TurbineCapitalCosts
+      promotes: [
+        "turbine_number",
+        "machine_rating",
+        "tcc_per_kW",
+        "offset_tcc_per_kW",
+      ]
+    landbosse:
+      type: component
+      module: ard.cost.wisdem_wrap
+      object: LandBOSSEWithSpacingApproximations
+      promotes: [
+        "total_length_cables",
+      ]
+      kwargs:
+        modeling_options: *modeling_options
+    opex:
+      type: component
+      module: ard.cost.wisdem_wrap
+      object: OperatingExpenses
+      promotes: [
+        "turbine_number",
+        "machine_rating",
+        "opex_per_kW"
+      ]
+    financese:
+      type: component
+      module: ard.cost.wisdem_wrap
+      object: FinanceSEGroup
+      promotes: [
+        "turbine_number",
+        "machine_rating",
+        "tcc_per_kW",
+        "offset_tcc_per_kW",
+        "opex_per_kW",
+      ]
+      kwargs:
+        modeling_options: *modeling_options
+  connections:
+    - ["AEP_farm", "financese.plant_aep_in"]
+    - ["landbosse.total_capex_kW", "financese.bos_per_kW"]
+
+analysis_options:
+  driver:
+    name: ScipyOptimizeDriver
+    options:
+      optimizer: "SLSQP"
+      opt_settings:
+        rhobeg: 1.0
+        maxiter: 50
+      debug_print:
+        - "desvars"
+        - "objs"
+  design_variables:
+    spacing_primary:
+      lower:  3.0
+      upper: 20.0
+      scaler: 2.0
+    spacing_secondary:
+      lower:  3.0
+      upper: 20.0
+      scaler: 2.0
+    angle_orientation:
+      lower: -180.0
+      upper:  180.0
+      scaler: 0.2
+    angle_skew:
+      lower: -45.0
+      upper:  45.0
+      scaler: 0.2
+  constraints:
+    boundary_distances:
+      units: "km"
+      upper: 0.0
+      scaler: 2.0
+    spacing_constraint.turbine_spacing:
+      units: "km"
+      lower: 0.552
+  objective:
+    name: AEP_farm
+    options:
+      scaler: -1.0e-12
+    # name: financese.lcoe
+    # options:
+    #   scaler: 1.0
+  recorder:
+    filepath: "cases.sql"

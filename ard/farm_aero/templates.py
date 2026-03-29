@@ -441,6 +441,16 @@ class FarmAEPTemplate(FarmAeroTemplate):
             "probability",
         )
 
+        # if requested, resample the wind rose
+        windrose_resample = self.modeling_options.get("wind_rose", {}).get(
+            "windrose_resample"
+        )
+        if windrose_resample is not None:
+            self.wind_query.resample_by_interpolation(
+                **windrose_resample,
+                inplace=True,
+            )
+
         if data_path is None:
             data_path = ""
 

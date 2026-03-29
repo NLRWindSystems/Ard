@@ -18,6 +18,7 @@ class TestLandBOSSE:
         filename_turbine = (
             Path(ard.__file__).parents[1]
             / "examples"
+            / "ard"
             / "data"
             / "windIO-plant_turbine_IEA-3.4MW-130m-RWT.yaml"
         )
@@ -112,6 +113,7 @@ class TestORBIT:
         filename_turbine = (
             Path(ard.__file__).parents[1]
             / "examples"
+            / "ard"
             / "data"
             / "windIO-plant_turbine_IEA-22MW-284m-RWT.yaml"
         )

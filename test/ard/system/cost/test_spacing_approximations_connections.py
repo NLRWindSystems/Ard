@@ -13,6 +13,7 @@ class TestLandBOSSEWithSpacingApproximations:
         filename_turbine = (
             Path(ard.__file__).parents[1]
             / "examples"
+            / "ard"
             / "data"
             / "windIO-plant_turbine_IEA-3.4MW-130m-RWT.yaml"
         )

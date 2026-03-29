@@ -3303,7 +3303,7 @@ site:
                 - 511.7766126774107
     energy_resource:
         name: Example energy resource
-        wind_resource: !include ../../../examples/data/windIO-plant_wind-resource_wrg-example.yaml
+        wind_resource: !include ../../../examples/ard/data/windIO-plant_wind-resource_wrg-example.yaml
 wind_farm:
     name: LogoFarm
     layouts:
@@ -3322,7 +3322,7 @@ wind_farm:
                  1250.0,  1250.0,  1250.0,  1250.0,  1250.0,
                  2500.0,  2500.0,  2500.0,  2500.0,  2500.0
             ]
-    turbine: !include ../../../examples/data/windIO-plant_turbine_IEA-3.4MW-130m-RWT.yaml
+    turbine: !include ../../../examples/ard/data/windIO-plant_turbine_IEA-3.4MW-130m-RWT.yaml
     electrical_substations:
         - electrical_substation:
             coordinates:
