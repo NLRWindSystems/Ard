@@ -78,6 +78,7 @@ class TestCollectionTemplate:
             for var_to_check in [
                 "length_cables",
                 "load_cables",
+                "terse_links",
                 "total_length_cables",
                 "max_load_cables",
             ]:
@@ -87,9 +88,7 @@ class TestCollectionTemplate:
             discrete_output_list = [
                 k for k, v in self.coll_temp._discrete_outputs.items()
             ]
-            for var_to_check in [
-                "terse_links",
-            ]:
+            for var_to_check in []:
                 assert var_to_check in discrete_output_list
 
     def test_compute(self):
