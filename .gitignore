@@ -1,9 +1,14 @@
 
-### ARD DEVELOPMENT IGNORES 
+### ARD DEVELOPMENT IGNORES
 
 .vscode
 case_files
 ard_prob_out
+
+### JULIA
+# Manifest.toml is user-generated (depends on local Julia version).
+# Project.toml is committed; Manifest.toml is rebuilt automatically on first use.
+ard/farm_aero/flowfarm/julia_env/Manifest.toml
 
 ### MACOS DEFAULT IGNORES
 

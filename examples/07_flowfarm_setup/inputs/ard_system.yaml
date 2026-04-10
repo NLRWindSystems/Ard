@@ -1,0 +1,177 @@
+modeling_options: &modeling_options
+  case_name: flowfarm_yaml_setup_demo
+  windIO_plant: !include windio.yaml
+  layout:
+    type: gridfarm
+    N_turbines: 25
+    N_substations: 1
+    spacing_primary: 7.0
+    spacing_secondary: 7.0
+    angle_orientation: 0.0
+    angle_skew: 0.0
+  aero:
+    return_turbine_output: true
+  collection:
+    max_turbines_per_string: 8
+    solver_name: highs
+    solver_options:
+      time_limit: 60
+      mip_gap: 0.02
+    model_options:
+      topology: radial
+      feeder_route: segmented
+      feeder_limit: unlimited
+  offshore: false
+  floating: false
+  costs:
+    rated_power: 3400000.0
+    num_blades: 3
+    rated_thrust_N: 645645.83964671
+    gust_velocity_m_per_s: 52.5
+    blade_surface_area: 69.7974979
+    tower_mass: 620.4407337521
+    nacelle_mass: 101.98582836439
+    hub_mass: 8.38407517646
+    blade_mass: 14.56341339641
+    foundation_height: 0.0
+    commissioning_cost_kW: 44.0
+    decommissioning_cost_kW: 58.0
+    trench_len_to_substation_km: 50.0
+    distance_to_interconnect_mi: 4.97096954
+    interconnect_voltage_kV: 130.0
+    tcc_per_kW: 1300.0
+    opex_per_kW: 44.0
+  stdio_capture: true
+  flowfarm:
+    wake_deficit_model: GaussYawVariableSpread
+    wake_deflection_model: GaussYawVariableSpreadDeflection
+    wake_combination_model: LinearLocalVelocitySuperposition
+    local_turbulence_model: LocalTIModelNoLocalTI
+    tolerance: 1.0e-16
+
+system:
+  type: group
+  systems:
+    layout2aep:
+      type: group
+      promotes: ["*"]
+      systems:
+        layout:
+          type: component
+          module: ard.layout.gridfarm
+          object: GridFarmLayout
+          promotes: ["*"]
+          kwargs:
+            modeling_options: *modeling_options
+        aepFLOWFarm:
+          type: component
+          module: ard.farm_aero.flowfarm
+          object: FLOWFarmAEP
+          promotes: ["*"]
+          kwargs:
+            modeling_options: *modeling_options
+            data_path:
+    boundary:
+      type: component
+      module: ard.layout.boundary
+      object: FarmBoundaryDistancePolygon
+      promotes: ["*"]
+      kwargs:
+        modeling_options: *modeling_options
+    spacing_constraint:
+      type: component
+      module: ard.layout.spacing
+      object: TurbineSpacing
+      promotes: ["*"]
+      kwargs:
+        modeling_options: *modeling_options
+    landuse:
+      type: component
+      module: ard.layout.gridfarm
+      object: GridFarmLanduse
+      promotes: ["*"]
+      kwargs:
+        modeling_options: *modeling_options
+    collection:
+      type: component
+      module: ard.collection.optiwindnet_wrap
+      object: OptiwindnetCollection
+      promotes: ["*"]
+      kwargs:
+        modeling_options: *modeling_options
+    tcc:
+      type: component
+      module: ard.cost.wisdem_wrap
+      object: TurbineCapitalCosts
+      promotes:
+      - turbine_number
+      - machine_rating
+      - tcc_per_kW
+      - offset_tcc_per_kW
+    landbosse:
+      type: component
+      module: ard.cost.wisdem_wrap
+      object: LandBOSSEWithSpacingApproximations
+      promotes:
+      - total_length_cables
+      kwargs:
+        modeling_options: *modeling_options
+    opex:
+      type: component
+      module: ard.cost.wisdem_wrap
+      object: OperatingExpenses
+      promotes:
+      - turbine_number
+      - machine_rating
+      - opex_per_kW
+    financese:
+      type: component
+      module: ard.cost.wisdem_wrap
+      object: FinanceSEGroup
+      promotes:
+      - turbine_number
+      - machine_rating
+      - tcc_per_kW
+      - offset_tcc_per_kW
+      - opex_per_kW
+      kwargs:
+        modeling_options: *modeling_options
+  connections:
+  - ["AEP_farm", "financese.plant_aep_in"]
+  - ["landbosse.total_capex_kW", "financese.bos_per_kW"]
+
+analysis_options:
+  driver:
+    name: ScipyOptimizeDriver
+    options:
+      optimizer: COBYLA
+      opt_settings:
+        rhobeg: 2.0
+        maxiter: 120
+        disp: false
+  design_variables:
+    spacing_primary:
+      lower: 3.0
+      upper: 20.0
+    spacing_secondary:
+      lower: 3.0
+      upper: 20.0
+    angle_orientation:
+      lower: -180.0
+      upper: 180.0
+    angle_skew:
+      lower: -45.0
+      upper: 45.0
+  objectives:
+    financese.lcoe:
+      scaler: 1.0
+  constraints:
+    boundary_distances:
+      units: km
+      upper: 0.0
+      scaler: 2.0
+    spacing_constraint.turbine_spacing:
+      units: km
+      lower: 0.552
+  recorder:
+    filepath: cases.sql

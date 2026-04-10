@@ -61,11 +61,19 @@ dev = [
   "pytest-cov",
   "pytest-subtests",
 ]
+flowfarm = [
+  "juliacall",
+]
 docs = [
   "pyxdsm",
   "jupyter-book<2.0",
   "sphinx-book-theme",
   "sphinx-autodoc-typehints",
+]
+
+[tool.pytest.ini_options]
+markers = [
+  "julia: marks tests that require Julia and FLOWFarm installed (skip with '-m \"not julia\"')",
 ]
 [project.urls]
 # Homepage = "https://example.com"
