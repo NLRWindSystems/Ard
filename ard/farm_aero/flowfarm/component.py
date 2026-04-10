@@ -5,6 +5,7 @@ from .flowfarm_model import (
     ensure_flowfarm_loaded,
     resolve_turbine_inputs_for_flowfarm,
     resolve_wake_model_inputs_for_flowfarm,
+    to_julia_vector_float64,
 )
 
 from .. import templates
@@ -22,9 +23,6 @@ class FLOWFarmComponent:
     def _get_wake_model_options(self, model_options):
         return resolve_wake_model_inputs_for_flowfarm(model_options.get("flowfarm", {}))
 
-    def _to_julia_vector(self, jl, values):
-        return jl.Vector[jl.Float64](list(map(float, np.asarray(values).ravel())))
-
     def _build_wind_resource(
         self,
         jl,
@@ -34,11 +32,11 @@ class FLOWFarmComponent:
         ref_air_density,
         wind_shear,
     ):
-        wind_dirs_rad = self._to_julia_vector(
+        wind_dirs_rad = to_julia_vector_float64(
             jl, np.deg2rad(np.asarray(windrose_floris.wd_flat))
         )
-        wind_speeds_vec = self._to_julia_vector(jl, windrose_floris.ws_flat)
-        wind_probs_vec = self._to_julia_vector(jl, windrose_floris.freq_table_flat)
+        wind_speeds_vec = to_julia_vector_float64(jl, windrose_floris.ws_flat)
+        wind_probs_vec = to_julia_vector_float64(jl, windrose_floris.freq_table_flat)
         n_states = len(windrose_floris.ws_flat)
         ambient_tis = jl.fill(float(np.mean(windrose_floris.ti_table_flat)), n_states)
         measurementheight = jl.fill(float(ref_height), n_states)
@@ -264,7 +262,7 @@ class FLOWFarmComponent:
         if jl is None:
             jl = ensure_flowfarm_loaded()
             self._jl = jl
-        x_eval = self._to_julia_vector(jl, x_eval_np)
+        x_eval = to_julia_vector_float64(jl, x_eval_np)
         calculate_grad_bang = getattr(self.flowfarm_module, "calculate_aep_gradient!")
         aep_val, grad_val = calculate_grad_bang(
             self.sparse_farm,
@@ -287,7 +285,7 @@ class FLOWFarmComponent:
         if jl is None:
             jl = ensure_flowfarm_loaded()
             self._jl = jl
-        x_eval = self._to_julia_vector(jl, x_eval_np)
+        x_eval = to_julia_vector_float64(jl, x_eval_np)
         calculate_aep_bang = getattr(self.flowfarm_module, "calculate_aep!")
         aep_val = calculate_aep_bang(self.farm, x_eval)
 

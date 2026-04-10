@@ -97,6 +97,24 @@ modeling_options:
 		tolerance: 1.0e-16
 ```
 
+## Supported FLOWFarm names
+
+Use the exact FLOWFarm constructor and model names expected by the integration.
+
+### Turbine model constructors
+
+- `PowerModelCpPoints`
+- `PowerModelConstantCp`
+- `ThrustModelCtPoints`
+- `ThrustModelConstantCt`
+
+### Wake model options
+
+- `wake_deficit_model`: `JensenTopHat`, `JensenCosine`, `MultiZone`, `GaussOriginal`, `GaussYaw`, `GaussYawVariableSpread`, `GaussSimple`, `CumulativeCurl`, `NoWakeDeficit`
+- `wake_deflection_model`: `NoYawDeflection`, `GaussYawDeflection`, `GaussYawVariableSpreadDeflection`, `JiminezYawDeflection`, `MultizoneDeflection`
+- `wake_combination_model`: `LinearFreestreamSuperposition`, `SumOfSquaresFreestreamSuperposition`, `SumOfSquaresLocalVelocitySuperposition`, `LinearLocalVelocitySuperposition`
+- `local_turbulence_model`: `LocalTIModelNoLocalTI`, `LocalTIModelMaxTI`, `LocalTIModelGaussTI`
+
 ## Key files
 
 - `_jl_bootstrap.py`: Julia runtime bootstrap and env activation helpers.

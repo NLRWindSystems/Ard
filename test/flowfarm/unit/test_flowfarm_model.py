@@ -3,7 +3,6 @@ Unit tests for ard/farm_aero/flowfarm/flowfarm_model.py.
 
 resolve_wake_model_inputs_for_flowfarm is pure Python and tested without any mocking.
 resolve_turbine_inputs_for_flowfarm calls Julia internally; those calls are patched.
-_resolve_flowfarm_constructor is pure Python and tested with simple mock objects.
 """
 
 import warnings
@@ -12,7 +11,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from ard.flowfarm.flowfarm_model import (
-    _resolve_flowfarm_constructor,
     resolve_turbine_inputs_for_flowfarm,
     resolve_wake_model_inputs_for_flowfarm,
 )
@@ -57,19 +55,6 @@ class TestResolveWakeModelInputs:
         assert result["wake_combination_model"] == "LinearFreestreamSuperposition"
         assert result["local_turbulence_model"] == "LocalTIModelMaxTI"
         assert result["tolerance"] == pytest.approx(1e-8)
-
-    def test_case_insensitive_matching(self):
-        opts = {
-            "wake_deficit_model": "jensentophat",
-            "wake_deflection_model": "NOYAWDEFLECTION",
-            "wake_combination_model": "linearfreestreamSuperposition",
-            "local_turbulence_model": "localtimodelmaXTI",
-            "tolerance": 1e-6,
-        }
-        result = resolve_wake_model_inputs_for_flowfarm(opts)
-
-        assert result["wake_deficit_model"] == "JensenTopHat"
-        assert result["wake_deflection_model"] == "NoYawDeflection"
 
     def test_invalid_deficit_model_raises_value_error(self):
         with pytest.raises(ValueError, match="wake_deficit_model"):
@@ -142,40 +127,6 @@ class TestResolveWakeModelInputs:
 
 
 # ---------------------------------------------------------------------------
-# _resolve_flowfarm_constructor  (pure Python — no Julia needed)
-# ---------------------------------------------------------------------------
-
-
-class TestResolveFlowfarmConstructor:
-
-    def test_returns_first_matching_candidate(self):
-        mock_module = MagicMock()
-        mock_ctor = MagicMock(name="PowerModelCpPoints")
-        mock_module.PowerModelCpPoints = mock_ctor
-
-        result = _resolve_flowfarm_constructor(
-            mock_module, ["PowerModelCpPoints", "PowerModelCpConstant"]
-        )
-        assert result is mock_ctor
-
-    def test_returns_second_when_first_absent(self):
-        mock_module = MagicMock(spec=["PowerModelCpConstant"])
-        mock_ctor = MagicMock(name="PowerModelCpConstant")
-        mock_module.PowerModelCpConstant = mock_ctor
-
-        result = _resolve_flowfarm_constructor(
-            mock_module, ["PowerModelCpPoints", "PowerModelCpConstant"]
-        )
-        assert result is mock_ctor
-
-    def test_returns_none_when_no_candidate_exists(self):
-        mock_module = MagicMock(spec=[])  # no attributes
-
-        result = _resolve_flowfarm_constructor(mock_module, ["Missing1", "Missing2"])
-        assert result is None
-
-
-# ---------------------------------------------------------------------------
 # resolve_turbine_inputs_for_flowfarm  (Julia calls mocked)
 # ---------------------------------------------------------------------------
 
@@ -209,8 +160,8 @@ def patched_julia():
     mock_ct_model = MagicMock(name="CtModel")
 
     with (
-        patch("ard.flowfarm.flowfarm_model._ensure_flowfarm_loaded"),
-        patch("ard.flowfarm.flowfarm_model._get_jl_main") as mock_jl_main,
+        patch("ard.flowfarm.flowfarm_model.ensure_flowfarm_loaded"),
+        patch("ard.flowfarm.flowfarm_model.get_julia_runtime") as mock_jl_runtime,
         patch(
             "ard.flowfarm.flowfarm_model._build_flowfarm_power_model",
             return_value=mock_power_model,
@@ -220,7 +171,7 @@ def patched_julia():
             return_value=mock_ct_model,
         ),
     ):
-        mock_jl_main.return_value = MagicMock(FLOWFarm=mock_ff_module)
+        mock_jl_runtime.return_value = (MagicMock(FLOWFarm=mock_ff_module), MagicMock())
         yield {"power_model": mock_power_model, "ct_model": mock_ct_model}
 
 

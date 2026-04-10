@@ -1,53 +1,16 @@
 from __future__ import annotations
 
-import pathlib
 import warnings
 import numpy as np
 
 from ._jl_bootstrap import ensure_flowfarm_loaded, get_julia_runtime
 
 # ------------------------------------------------------------------------------
-# Configuration (project activation)
+# Utility: Julia Vector conversion
 # ------------------------------------------------------------------------------
-
-# If you're using the embedded project (recommended), point to it explicitly:
-_THIS_DIR = pathlib.Path(__file__).resolve().parent
-_JULIA_PROJECT_DIR = _THIS_DIR / "julia_env"
-
-
-def _get_jl_main():
-    jl, _ = get_julia_runtime()
-    return jl
-
-
-def _ensure_env_activated():
-    # Prefer explicit activation over relying on JULIA_PROJECT env var.
-    _, jl_pkg = get_julia_runtime()
-    jl_pkg.activate(str(_JULIA_PROJECT_DIR))
-    jl_pkg.instantiate()  # ensures Manifest is honored / deps are present
-
-
-def _ensure_flowfarm_loaded():
-    ensure_flowfarm_loaded()
-
-
-# ------------------------------------------------------------------------------
-# Utility: Julia Vector conversion (optional; JuliaCall already converts NumPy arrays)
-# ------------------------------------------------------------------------------
-
-
-def _jvec(x):
-    """Convert Python list/array → Julia Vector{Float64} (explicit)."""
-    jl = _get_jl_main()
-    return jl.Vector[jl.Float64](list(map(float, np.asarray(x).ravel())))
-
-
-def _resolve_flowfarm_constructor(flowfarm_module, candidate_names):
-    """Return the first FLOWFarm constructor that exists from candidate names."""
-    for name in candidate_names:
-        if hasattr(flowfarm_module, name):
-            return getattr(flowfarm_module, name)
-    return None
+def to_julia_vector_float64(jl, values):
+    """Convert Python list/array to Julia Vector{Float64}."""
+    return jl.Vector[jl.Float64](list(map(float, np.asarray(values).ravel())))
 
 
 def _build_flowfarm_power_model(
@@ -55,45 +18,18 @@ def _build_flowfarm_power_model(
     has_cp_curve,
     cp_curve,
     constant_cp,
-    fallback_wind_speeds,
 ):
-    """Build a FLOWFarm power model from Cp curve or constant Cp fallback."""
+    """Build a FLOWFarm power model from Cp curve or constant Cp."""
+    power_points_ctor = flowfarm_module.PowerModelCpPoints
+
     if has_cp_curve:
-        power_points_ctor = _resolve_flowfarm_constructor(
-            flowfarm_module,
-            ["PowerModelCpPoints"],
-        )
-        if power_points_ctor is None:
-            raise AttributeError(
-                "FLOWFarm.PowerModelCpPoints constructor was not found."
-            )
+        jl, _ = get_julia_runtime()
         return power_points_ctor(
-            _jvec(cp_curve["Cp_wind_speeds"]),
-            _jvec(cp_curve["Cp_values"]),
+            to_julia_vector_float64(jl, cp_curve["Cp_wind_speeds"]),
+            to_julia_vector_float64(jl, cp_curve["Cp_values"]),
         )
 
-    power_constant_ctor = _resolve_flowfarm_constructor(
-        flowfarm_module,
-        ["PowerModelConstantCp", "PowerModelCpConstant"],
-    )
-    if power_constant_ctor is not None:
-        return power_constant_ctor(float(constant_cp))
-
-    # Last-resort fallback if constant-Cp constructor name differs by FLOWFarm version.
-    # Approximate a constant Cp model using points at representative wind speeds.
-    warnings.warn(
-        "FLOWFarm constant-Cp constructor not found; falling back to PowerModelCpPoints with constant Cp.",
-        UserWarning,
-        stacklevel=2,
-    )
-    power_points_ctor = _resolve_flowfarm_constructor(
-        flowfarm_module,
-        ["PowerModelCpPoints"],
-    )
-    if power_points_ctor is None:
-        raise AttributeError("FLOWFarm.PowerModelCpPoints constructor was not found.")
-    cp_values = [float(constant_cp)] * len(fallback_wind_speeds)
-    return power_points_ctor(_jvec(fallback_wind_speeds), _jvec(cp_values))
+    return flowfarm_module.PowerModelConstantCp(float(constant_cp))
 
 
 def _build_flowfarm_ct_model(
@@ -101,50 +37,24 @@ def _build_flowfarm_ct_model(
     has_ct_curve,
     ct_curve,
     constant_ct,
-    fallback_wind_speeds,
 ):
-    """Build a FLOWFarm thrust model from Ct curve or constant Ct fallback."""
+    """Build a FLOWFarm thrust model from Ct curve or constant Ct."""
+    ct_points_ctor = flowfarm_module.ThrustModelCtPoints
+
     if has_ct_curve:
-        ct_points_ctor = _resolve_flowfarm_constructor(
-            flowfarm_module,
-            ["ThrustModelCtPoints"],
-        )
-        if ct_points_ctor is None:
-            raise AttributeError(
-                "FLOWFarm.ThrustModelCtPoints constructor was not found."
-            )
+        jl, _ = get_julia_runtime()
         return ct_points_ctor(
-            _jvec(ct_curve["Ct_wind_speeds"]),
-            _jvec(ct_curve["Ct_values"]),
+            to_julia_vector_float64(jl, ct_curve["Ct_wind_speeds"]),
+            to_julia_vector_float64(jl, ct_curve["Ct_values"]),
         )
 
-    ct_constant_ctor = _resolve_flowfarm_constructor(
-        flowfarm_module,
-        ["ThrustModelConstantCt", "ThrustModelCtConstant"],
-    )
-    if ct_constant_ctor is not None:
-        return ct_constant_ctor(float(constant_ct))
-
-    # Last-resort fallback if constant-Ct constructor name differs by FLOWFarm version.
-    warnings.warn(
-        "FLOWFarm constant-Ct constructor not found; falling back to ThrustModelCtPoints with constant Ct.",
-        UserWarning,
-        stacklevel=2,
-    )
-    ct_points_ctor = _resolve_flowfarm_constructor(
-        flowfarm_module,
-        ["ThrustModelCtPoints"],
-    )
-    if ct_points_ctor is None:
-        raise AttributeError("FLOWFarm.ThrustModelCtPoints constructor was not found.")
-    ct_values = [float(constant_ct)] * len(fallback_wind_speeds)
-    return ct_points_ctor(_jvec(fallback_wind_speeds), _jvec(ct_values))
+    return flowfarm_module.ThrustModelConstantCt(float(constant_ct))
 
 
 def resolve_turbine_inputs_for_flowfarm(windio_turbine):
     """Validate turbine inputs and return a normalized config dict for FLOWFarm."""
-    _ensure_flowfarm_loaded()
-    jl = _get_jl_main()
+    ensure_flowfarm_loaded()
+    jl, _ = get_julia_runtime()
     flowfarm_module = jl.FLOWFarm
 
     scalar_defaults = {
@@ -201,33 +111,17 @@ def resolve_turbine_inputs_for_flowfarm(windio_turbine):
             stacklevel=2,
         )
 
-    fallback_wind_speeds = [
-        float(
-            windio_turbine.get("cutin_wind_speed", scalar_defaults["cutin_wind_speed"])
-        ),
-        float(
-            windio_turbine.get("rated_wind_speed", scalar_defaults["rated_wind_speed"])
-        ),
-        float(
-            windio_turbine.get(
-                "cutout_wind_speed", scalar_defaults["cutout_wind_speed"]
-            )
-        ),
-    ]
-
     power_model = _build_flowfarm_power_model(
         flowfarm_module,
         has_cp_curve,
         cp_curve,
         constant_cp,
-        fallback_wind_speeds,
     )
     ct_model = _build_flowfarm_ct_model(
         flowfarm_module,
         has_ct_curve,
         ct_curve,
         constant_ct,
-        fallback_wind_speeds,
     )
 
     return {
@@ -338,15 +232,13 @@ def resolve_wake_model_inputs_for_flowfarm(flowfarm_model_options):
             raise ValueError(f"FLOWFarm option '{key}' cannot be empty.")
 
         allowed_for_key = allowed_values[key]
-        alias_lookup = {v.lower(): v for v in allowed_for_key}
-        value_canonical = alias_lookup.get(value.lower())
-        if value_canonical is None:
+        if value not in allowed_for_key:
             raise ValueError(
                 f"Invalid FLOWFarm option for '{key}': '{value}'. "
                 f"Allowed values: {sorted(allowed_for_key)}"
             )
 
-        resolved[key] = value_canonical
+        resolved[key] = value
 
     tolerance = flowfarm_model_options.get("tolerance", defaults["tolerance"])
     if not isinstance(tolerance, (int, float)):
