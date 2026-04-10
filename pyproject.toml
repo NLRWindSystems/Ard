@@ -18,7 +18,7 @@ include = ["ard", "ard.*"]
 
 [project]
 name = "ard-nrel"
-version = "0.1.0-beta2"
+version = "0.1.0-beta4"
 authors = [
   {name = "Cory Frontin", email = "cory.frontin@nrel.gov"},
   {name = "Rafael Mudafort", email = "rafael.mudafort@nrel.gov"},
@@ -40,7 +40,7 @@ classifiers = [
 dependencies = [
   "numpy",
   "floris>=4.3",
-  "wisdem>=4.0.5",
+  "wisdem==4.0.5",
   "NLopt",
   "marmot-agents",
   "openmdao",
@@ -66,7 +66,7 @@ flowfarm = [
 ]
 docs = [
   "pyxdsm",
-  "jupyter-book",
+  "jupyter-book<2.0",
   "sphinx-book-theme",
   "sphinx-autodoc-typehints",
 ]
