@@ -43,7 +43,6 @@ modeling_options: &modeling_options
     opex_per_kW: 44.0
   stdio_capture: true
   flowfarm:
-    ref_air_density: 1.225
     wake_deficit_model: GaussYawVariableSpread
     wake_deflection_model: GaussYawVariableSpreadDeflection
     wake_combination_model: LinearLocalVelocitySuperposition

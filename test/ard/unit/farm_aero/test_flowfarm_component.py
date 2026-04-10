@@ -1,5 +1,5 @@
 """
-Unit tests for ard/farm_aero/flowfarm.py.
+Unit tests for ard/farm_aero/flowfarm/component.py.
 
 Julia is mocked entirely — these tests cover the Python-layer logic of
 FLOWFarmComponent, FLOWFarmAEP, and FLOWFarmBatchPower without starting Julia.

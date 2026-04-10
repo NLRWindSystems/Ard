@@ -8,7 +8,7 @@ ard_prob_out
 ### JULIA
 # Manifest.toml is user-generated (depends on local Julia version).
 # Project.toml is committed; Manifest.toml is rebuilt automatically on first use.
-ard/flowfarm/julia_env/Manifest.toml
+ard/farm_aero/flowfarm/julia_env/Manifest.toml
 
 ### MACOS DEFAULT IGNORES
 

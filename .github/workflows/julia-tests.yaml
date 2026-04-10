@@ -3,13 +3,11 @@ name: FLOWFarm integration tests (Julia)
 on:
   push:
     paths:
-      - "ard/flowfarm/**"
-      - "ard/farm_aero/flowfarm.py"
+      - "ard/farm_aero/flowfarm/**"
       - "test/flowfarm/**"
   pull_request:
     paths:
-      - "ard/flowfarm/**"
-      - "ard/farm_aero/flowfarm.py"
+      - "ard/farm_aero/flowfarm/**"
       - "test/flowfarm/**"
   workflow_dispatch:  # allow manual runs from the Actions UI
 
@@ -42,7 +40,7 @@ jobs:
     - name: Pre-instantiate Julia environment
       run: |
         julia -e "using Pkg; Pkg.Registry.add(\"General\"); Pkg.Registry.update()"
-        julia --project=ard/flowfarm/julia_env -e "using Pkg; Pkg.resolve(); Pkg.instantiate()"
+        julia --project=ard/farm_aero/flowfarm/julia_env -e "using Pkg; Pkg.resolve(); Pkg.instantiate()"
 
     - name: Run FLOWFarm integration tests
       run: |

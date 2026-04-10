@@ -1,5 +1,5 @@
 """
-Unit tests for ard/flowfarm/flowfarm_model.py.
+Unit tests for ard/farm_aero/flowfarm/flowfarm_model.py.
 
 resolve_wake_model_inputs_for_flowfarm is pure Python and tested without any mocking.
 resolve_turbine_inputs_for_flowfarm calls Julia internally; those calls are patched.

@@ -1,16 +1,13 @@
-import os
-
 import numpy as np
-import pandas as pd
 
-from ard.farm_aero.floris import create_FLORIS_turbine_from_windIO
-from ard.flowfarm.flowfarm_model import (
+from ..floris import create_FLORIS_turbine_from_windIO
+from .flowfarm_model import (
     ensure_flowfarm_loaded,
     resolve_turbine_inputs_for_flowfarm,
     resolve_wake_model_inputs_for_flowfarm,
 )
 
-import ard.farm_aero.templates as templates
+from .. import templates
 
 
 class FLOWFarmComponent:
@@ -19,85 +16,35 @@ class FLOWFarmComponent:
         # This mixin is invoked explicitly by derived classes; no super() chain here.
         return
 
-    def setup(self):
-        jl = ensure_flowfarm_loaded()
-        self._jl = jl
-        model_options = self.options["modeling_options"]
-        self.N_turbines = model_options["layout"]["N_turbines"]
-        windIO = model_options["windIO_plant"]
-        N_turbines = self.N_turbines
+    def _get_air_density(self, wind_resource):
+        return float(wind_resource.get("air_density", 1.225))
 
-        turbine_floris = create_FLORIS_turbine_from_windIO(windIO)
-        ref_air_density = model_options.get("flowfarm", {}).get(
-            "ref_air_density", 1.225
+    def _get_wake_model_options(self, model_options):
+        return resolve_wake_model_inputs_for_flowfarm(model_options.get("flowfarm", {}))
+
+    def _to_julia_vector(self, jl, values):
+        return jl.Vector[jl.Float64](list(map(float, np.asarray(values).ravel())))
+
+    def _build_wind_resource(
+        self,
+        jl,
+        flowfarm_module,
+        windrose_floris,
+        ref_height,
+        ref_air_density,
+        wind_shear,
+    ):
+        wind_dirs_rad = self._to_julia_vector(
+            jl, np.deg2rad(np.asarray(windrose_floris.wd_flat))
         )
-
-        hub_height = turbine_floris["hub_height"]
-        rotor_diameter = turbine_floris["rotor_diameter"]
-
-        windIOturbine = windIO["wind_farm"]["turbine"]
-        turbine_inputs = resolve_turbine_inputs_for_flowfarm(windIOturbine)
-        generator_efficiency = turbine_inputs["generator_efficiency"]
-        rated_power = turbine_inputs["rated_power"]
-        rated_wind_speed = turbine_inputs["rated_wind_speed"]
-        cutin_wind_speed = turbine_inputs["cutin_wind_speed"]
-        cutout_wind_speed = turbine_inputs["cutout_wind_speed"]
-        ct_model = turbine_inputs["ct_model"]
-        power_model = turbine_inputs["power_model"]
-
-        windrose_floris = templates.create_windresource_from_windIO(
-            windIO,
-            resource_type="probability",
-        )
-
-        wind_directions = windrose_floris.wd_flat
-        wind_speeds = windrose_floris.ws_flat
-        wind_probabilities = windrose_floris.freq_table_flat
-        turbulence_intensity = np.mean(windrose_floris.ti_table_flat)
-        ref_height = windIO["site"]["energy_resource"]["wind_resource"].get(
-            "reference_height", hub_height
-        )
-        wind_shear = windIO["site"]["energy_resource"]["wind_resource"].get(
-            "shear", 0.084
-        )
-
-        flowfarm_options = model_options.get("flowfarm", {})
-        wake_option_keys = {
-            "wake_deficit_model",
-            "wake_deflection_model",
-            "wake_combination_model",
-            "local_turbulence_model",
-            "tolerance",
-        }
-        wake_options_only = {
-            key: value
-            for key, value in flowfarm_options.items()
-            if key in wake_option_keys
-        }
-        wake_model_options = resolve_wake_model_inputs_for_flowfarm(wake_options_only)
-
-        # FLOWFarm expects one model object per turbine.
-        ct_models = jl.fill(ct_model, N_turbines)
-        power_models = jl.fill(power_model, N_turbines)
-
-        flowfarm_module = jl.FLOWFarm
-        n_states = len(wind_speeds)
-
-        # FLOWFarm expects radians for wind direction.
-        wind_dirs_rad = jl.Vector[jl.Float64](
-            list(map(float, np.deg2rad(np.asarray(wind_directions))))
-        )
-        wind_speeds_vec = jl.Vector[jl.Float64](
-            list(map(float, np.asarray(wind_speeds)))
-        )
-        wind_probs_vec = jl.Vector[jl.Float64](
-            list(map(float, np.asarray(wind_probabilities)))
-        )
-        ambient_tis = jl.fill(float(turbulence_intensity), n_states)
+        wind_speeds_vec = self._to_julia_vector(jl, windrose_floris.ws_flat)
+        wind_probs_vec = self._to_julia_vector(jl, windrose_floris.freq_table_flat)
+        n_states = len(windrose_floris.ws_flat)
+        ambient_tis = jl.fill(float(np.mean(windrose_floris.ti_table_flat)), n_states)
         measurementheight = jl.fill(float(ref_height), n_states)
-
         wind_shear_model = flowfarm_module.PowerLawWindShear(float(wind_shear))
-        windresource = flowfarm_module.DiscretizedWindResource(
+
+        return flowfarm_module.DiscretizedWindResource(
             wind_dirs_rad,
             wind_speeds_vec,
             wind_probs_vec,
@@ -107,6 +54,7 @@ class FLOWFarmComponent:
             wind_shear_model,
         )
 
+    def _build_wake_model_set(self, flowfarm_module, wake_model_options):
         wake_deficit = getattr(
             flowfarm_module, wake_model_options["wake_deficit_model"]
         )()
@@ -120,14 +68,49 @@ class FLOWFarmComponent:
             flowfarm_module, wake_model_options["local_turbulence_model"]
         )()
 
-        model_set = flowfarm_module.WindFarmModelSet(
+        return flowfarm_module.WindFarmModelSet(
             wake_deficit,
             wake_deflection,
             wake_combine,
             local_ti,
         )
 
-        # Temporary initialization until layout-driven vectors are wired in.
+    def _create_update_fn(self, jl):
+        jl.seval(
+            """
+            function ard_make_flowfarm_update_fn()
+                return function (farm, x)
+                    n = length(farm.turbine_x)
+                    @inbounds for i in 1:n
+                        farm.turbine_x[i] = x[i]
+                        farm.turbine_y[i] = x[n + i]
+                        farm.turbine_yaw[i] = x[2n + i]
+                    end
+                    return nothing
+                end
+            end
+            """
+        )
+        return jl.ard_make_flowfarm_update_fn()
+
+    def _build_farm_structures(
+        self,
+        jl,
+        flowfarm_module,
+        N_turbines,
+        hub_height,
+        rotor_diameter,
+        generator_efficiency,
+        cutin_wind_speed,
+        cutout_wind_speed,
+        rated_wind_speed,
+        rated_power,
+        windresource,
+        ct_models,
+        power_models,
+        model_set,
+        tolerance,
+    ):
         x0 = jl.zeros(N_turbines * 3)
         turbine_x = jl.zeros(N_turbines)
         turbine_y = jl.zeros(N_turbines)
@@ -141,22 +124,8 @@ class FLOWFarmComponent:
         cut_out_speeds = jl.fill(float(cutout_wind_speed), N_turbines)
         rated_speeds = jl.fill(float(rated_wind_speed), N_turbines)
         rated_powers = jl.fill(float(rated_power), N_turbines)
+        update_fn = self._create_update_fn(jl)
 
-        # Use a pure Julia callback so threaded FLOWFarm paths do not call back into Python.
-        jl.seval("""
-            function ard_make_flowfarm_update_fn()
-                return function (farm, x)
-                    n = length(farm.turbine_x)
-                    @inbounds for i in 1:n
-                        farm.turbine_x[i] = x[i]
-                        farm.turbine_y[i] = x[n + i]
-                        farm.turbine_yaw[i] = x[2n + i]
-                    end
-                    return nothing
-                end
-            end
-            """)
-        update_fn = jl.ard_make_flowfarm_update_fn()
         sparse_farm, sparse_struct = flowfarm_module.build_unstable_sparse_struct(
             x0,
             turbine_x,
@@ -179,7 +148,7 @@ class FLOWFarmComponent:
             opt_x=True,
             opt_y=True,
             opt_yaw=True,
-            tolerance=wake_model_options.get("tolerance", 1e-16),
+            tolerance=tolerance,
         )
 
         farm = flowfarm_module.build_wind_farm_struct(
@@ -201,6 +170,75 @@ class FLOWFarmComponent:
             model_set,
             update_fn,
             AEP_scale=1,
+        )
+
+        return x0, farm, sparse_farm, sparse_struct
+
+    def setup(self):
+        jl = ensure_flowfarm_loaded()
+        self._jl = jl
+        model_options = self.options["modeling_options"]
+        self.N_turbines = model_options["layout"]["N_turbines"]
+        windIO = model_options["windIO_plant"]
+        wind_resource = windIO["site"]["energy_resource"]["wind_resource"]
+
+        turbine_floris = create_FLORIS_turbine_from_windIO(windIO)
+        ref_air_density = self._get_air_density(wind_resource)
+
+        hub_height = turbine_floris["hub_height"]
+        rotor_diameter = turbine_floris["rotor_diameter"]
+
+        windIOturbine = windIO["wind_farm"]["turbine"]
+        turbine_inputs = resolve_turbine_inputs_for_flowfarm(windIOturbine)
+        generator_efficiency = turbine_inputs["generator_efficiency"]
+        rated_power = turbine_inputs["rated_power"]
+        rated_wind_speed = turbine_inputs["rated_wind_speed"]
+        cutin_wind_speed = turbine_inputs["cutin_wind_speed"]
+        cutout_wind_speed = turbine_inputs["cutout_wind_speed"]
+        ct_model = turbine_inputs["ct_model"]
+        power_model = turbine_inputs["power_model"]
+
+        windrose_floris = templates.create_windresource_from_windIO(
+            windIO,
+            resource_type="probability",
+        )
+
+        ref_height = wind_resource.get("reference_height", hub_height)
+        wind_shear = wind_resource.get("shear", 0.084)
+
+        wake_model_options = self._get_wake_model_options(model_options)
+
+        # FLOWFarm expects one model object per turbine.
+        ct_models = jl.fill(ct_model, N_turbines)
+        power_models = jl.fill(power_model, N_turbines)
+
+        flowfarm_module = jl.FLOWFarm
+        windresource = self._build_wind_resource(
+            jl,
+            flowfarm_module,
+            windrose_floris,
+            ref_height,
+            ref_air_density,
+            wind_shear,
+        )
+        model_set = self._build_wake_model_set(flowfarm_module, wake_model_options)
+
+        x0, farm, sparse_farm, sparse_struct = self._build_farm_structures(
+            jl,
+            flowfarm_module,
+            self.N_turbines,
+            hub_height,
+            rotor_diameter,
+            generator_efficiency,
+            cutin_wind_speed,
+            cutout_wind_speed,
+            rated_wind_speed,
+            rated_power,
+            windresource,
+            ct_models,
+            power_models,
+            model_set,
+            wake_model_options.get("tolerance", 1e-16),
         )
 
         self.flowfarm_module = flowfarm_module
@@ -226,7 +264,7 @@ class FLOWFarmComponent:
         if jl is None:
             jl = ensure_flowfarm_loaded()
             self._jl = jl
-        x_eval = jl.Vector[jl.Float64](list(map(float, x_eval_np)))
+        x_eval = self._to_julia_vector(jl, x_eval_np)
         calculate_grad_bang = getattr(self.flowfarm_module, "calculate_aep_gradient!")
         aep_val, grad_val = calculate_grad_bang(
             self.sparse_farm,
@@ -249,7 +287,7 @@ class FLOWFarmComponent:
         if jl is None:
             jl = ensure_flowfarm_loaded()
             self._jl = jl
-        x_eval = jl.Vector[jl.Float64](list(map(float, x_eval_np)))
+        x_eval = self._to_julia_vector(jl, x_eval_np)
         calculate_aep_bang = getattr(self.flowfarm_module, "calculate_aep!")
         aep_val = calculate_aep_bang(self.farm, x_eval)
 
