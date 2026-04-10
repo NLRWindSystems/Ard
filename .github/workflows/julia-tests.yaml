@@ -29,7 +29,7 @@ jobs:
     - name: Set up Julia
       uses: julia-actions/setup-julia@v2
       with:
-        version: "1"  # latest stable 1.x
+        version: "1.10"
 
     - name: Cache Julia packages
       uses: julia-actions/cache@v2
@@ -40,7 +40,7 @@ jobs:
     - name: Pre-instantiate Julia environment
       run: |
         julia -e "using Pkg; Pkg.Registry.add(\"General\"); Pkg.Registry.update()"
-        julia --project=ard/farm_aero/flowfarm/julia_env -e "using Pkg; Pkg.resolve(); Pkg.instantiate()"
+        julia --project=ard/farm_aero/flowfarm/julia_env -e "using Pkg; Pkg.instantiate(); Pkg.precompile()"
 
     - name: Run FLOWFarm integration tests
       run: |
