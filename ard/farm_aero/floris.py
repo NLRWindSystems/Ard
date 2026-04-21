@@ -287,6 +287,7 @@ class FLORISFarmComponent:
     def get_DELs(self):
         SATI = self.fmodel.get_turbine_SATI() * 100
         SAWS = self.fmodel.get_turbine_SAWS()
+        # TODO: This should work, as it did for the TORQUE results, but it was just set to 100% for no de-rating, so should verify for derated values
         turbine_powers_percent = self.fmodel.get_turbine_powers_percent().flatten()
         turbine_powers_percent = np.ones_like(turbine_powers_percent) * 100.
 
@@ -605,5 +606,127 @@ class FLORISSurrogateDELs(FLORISAEP):
         outputs["yaw_bearings_DEL"] = DEL_outputs[3]
         outputs["AEP_farm"] = FLORISFarmComponent.get_AEP_farm(self)
 
+    def setup_partials(self):
+        FLORISFarmComponent.setup_partials(self)
+
+
+class FLORISCurtailment(templates.FarmAEPTemplate, FLORISSurrogateDELs):
+    """
+    Component class for computing an AEP analysis using FLORIS.
+
+    A component class that evaluates a series of farm power and associated
+    quantities using FLORIS with a wind rose to make an AEP estimate. Inherits
+    the interface from `templates.FarmAEPTemplate` and the computational guts
+    from `FLORISFarmComponent`.
+
+    Options
+    -------
+    case_title : str
+        a "title" for the case, used to disambiguate runs in practice (inherited
+        from `FLORISFarmComponent`)
+    modeling_options : dict
+        a modeling options dictionary (inherited via
+        `templates.FarmAEPTemplate`)
+    wind_query : floris.wind_data.WindRose
+        a WindQuery objects that specifies the wind conditions that are to be
+        computed (inherited from `templates.FarmAEPTemplate`)
+
+    Inputs
+    ------
+    x_turbines : np.ndarray
+        a 1D numpy array indicating the x-dimension locations of the turbines,
+        with length `N_turbines` (inherited via `templates.FarmAEPTemplate`)
+    y_turbines : np.ndarray
+        a 1D numpy array indicating the y-dimension locations of the turbines,
+        with length `N_turbines` (inherited via `templates.FarmAEPTemplate`)
+    yaw_turbines : np.ndarray
+        a numpy array indicating the yaw angle to drive each turbine to with
+        respect to the ambient wind direction, with length `N_turbines`
+        (inherited via `templates.FarmAEPTemplate`)
+
+    Outputs
+    -------
+    AEP_farm : float
+        the AEP of the farm given by the analysis (inherited from
+        `templates.FarmAEPTemplate`)
+    power_farm : np.ndarray
+        an array of the farm power for each of the wind conditions that have
+        been queried (inherited from `templates.FarmAEPTemplate`)
+    power_turbines : np.ndarray
+        an array of the farm power for each of the turbines in the farm across
+        all of the conditions that have been queried on the wind rose
+        (`N_turbines`, `N_wind_conditions`) (inherited from
+        `templates.FarmAEPTemplate`)
+    thrust_turbines : np.ndarray
+        an array of the wind turbine thrust for each of the turbines in the farm
+        across all of the conditions that have been queried on the wind rose
+        (`N_turbines`, `N_wind_conditions`) (inherited from
+        `templates.FarmAEPTemplate`)
+    """
+    # TODO: Update doc strings to reflect curtailment options and outputs
+
+    def initialize(self):
+        super().initialize()  # run super class script first!
+        FLORISFarmComponent.initialize(self)  # add on FLORIS superclass
+
+    @ard_logging.component_log_capture
+    def setup(self):
+        super().setup()  # run super class script first!
+        FLORISFarmComponent.setup(self)  # setup a FLORIS run
+
+        rated_turbine_power = 1e12 # set high to make sure that power setpoints are set to full power by default; TODO: update from turbine info provided?
+
+        self.add_input(
+            "turbine_power_setpoints",
+            np.ones((self.N_wind_conditions, self.N_turbines)) * rated_turbine_power,  # default to no curtailment
+            units="kW",
+            desc="power setpoints to drive the turbines to for curtailment, with length `N_turbines`",
+        )
+
+    @ard_logging.component_log_capture
+    def setup_partials(self):
+        super().setup_partials()
+
+    @ard_logging.component_log_capture
+    def compute(self, inputs, outputs):
+
+        # set up and run the floris model
+        self.fmodel.set(
+            layout_x=inputs["x_turbines"],
+            layout_y=inputs["y_turbines"],
+            wind_data=self.wind_query,
+            yaw_angles=np.array([inputs["yaw_turbines"]]),
+            reference_wind_height=getattr(
+                self.wind_query,
+                "reference_height",
+                None,
+            ),
+        )
+        if "peak_shaving_fraction" in self.modeling_options.get("floris", {}):
+            self.fmodel.set_operation_model("peak-shaving")
+        if True:  # TODO: figure out how to enable through ard_system.yaml or otherwise to indicate that curtailment should be used
+            self.fmodel.set_operation_model("simple-derating")
+            self.fmodel.set_power_setpoints(inputs["turbine_power_setpoints"])
+
+        self.fmodel.run()
+
+        DEL_outputs = FLORISFarmComponent.get_DELs(self)
+
+        # dump the yaml to re-run this case on demand
+        FLORISFarmComponent.dump_floris_yamlfile(self, self.dir_floris)
+
+        # FLORIS computes the powers
+        outputs["AEP_farm"] = FLORISFarmComponent.get_AEP_farm(self)
+        outputs["power_farm"] = FLORISFarmComponent.get_power_farm(self)
+        outputs["power_turbines"] = FLORISFarmComponent.get_power_turbines(self)
+        outputs["thrust_turbines"] = FLORISFarmComponent.get_thrust_turbines(self)
+
+        outputs["blade_root_DEL"] = DEL_outputs[0]
+        outputs["shaft_DEL"] = DEL_outputs[1]
+        outputs["tower_base_DEL"] = DEL_outputs[2]
+        outputs["yaw_bearings_DEL"] = DEL_outputs[3]
+        outputs["AEP_farm"] = FLORISFarmComponent.get_AEP_farm(self)
+
+    @ard_logging.component_log_capture
     def setup_partials(self):
         FLORISFarmComponent.setup_partials(self)
