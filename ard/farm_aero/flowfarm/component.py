@@ -32,13 +32,25 @@ class FLOWFarmComponent:
         ref_air_density,
         wind_shear,
     ):
-        wind_dirs_rad = to_julia_vector_float64(
-            jl, np.deg2rad(np.asarray(windrose_floris.wd_flat))
-        )
-        wind_speeds_vec = to_julia_vector_float64(jl, windrose_floris.ws_flat)
-        wind_probs_vec = to_julia_vector_float64(jl, windrose_floris.freq_table_flat)
-        n_states = len(windrose_floris.ws_flat)
-        ambient_tis = jl.fill(float(np.mean(windrose_floris.ti_table_flat)), n_states)
+        if hasattr(windrose_floris, "wd_flat"):
+            # WindRose (probability-based)
+            dirs = np.deg2rad(np.asarray(windrose_floris.wd_flat))
+            speeds = np.asarray(windrose_floris.ws_flat)
+            probs = np.asarray(windrose_floris.freq_table_flat)
+            n_states = len(speeds)
+            mean_ti = float(np.mean(windrose_floris.ti_table_flat))
+        else:
+            # TimeSeries (temporal dispatch)
+            dirs = np.deg2rad(np.asarray(windrose_floris.wind_directions))
+            speeds = np.asarray(windrose_floris.wind_speeds)
+            n_states = len(speeds)
+            probs = np.full(n_states, 1.0 / n_states)
+            mean_ti = float(np.mean(windrose_floris.turbulence_intensities))
+
+        wind_dirs_rad = to_julia_vector_float64(jl, dirs)
+        wind_speeds_vec = to_julia_vector_float64(jl, speeds)
+        wind_probs_vec = to_julia_vector_float64(jl, probs)
+        ambient_tis = jl.fill(mean_ti, n_states)
         measurementheight = jl.fill(float(ref_height), n_states)
         wind_shear_model = flowfarm_module.PowerLawWindShear(float(wind_shear))
 
@@ -108,10 +120,20 @@ class FLOWFarmComponent:
         power_models,
         model_set,
         tolerance,
+        x_init=None,
+        y_init=None,
     ):
-        x0 = jl.zeros(N_turbines * 3)
-        turbine_x = jl.zeros(N_turbines)
-        turbine_y = jl.zeros(N_turbines)
+        # Use actual initial positions if provided so the sparsity pattern
+        # computed by build_unstable_sparse_struct sees a non-degenerate farm
+        # geometry (x0=zeros puts all turbines at the origin, hiding x/y deps).
+        if x_init is None:
+            x_init = np.zeros(N_turbines)
+        if y_init is None:
+            y_init = np.zeros(N_turbines)
+        x0_np = np.concatenate([x_init, y_init, np.zeros(N_turbines)])
+        x0 = to_julia_vector_float64(jl, x0_np)
+        turbine_x = to_julia_vector_float64(jl, x_init)
+        turbine_y = to_julia_vector_float64(jl, y_init)
         turbine_z = jl.zeros(N_turbines)
         turbine_yaw = jl.zeros(N_turbines)
 
@@ -172,6 +194,42 @@ class FLOWFarmComponent:
 
         return x0, farm, sparse_farm, sparse_struct
 
+    def _initial_turbine_positions(self, model_options, rotor_diameter):
+        """Compute a non-degenerate initial grid layout for sparsity detection.
+
+        build_unstable_sparse_struct computes the sparse Jacobian pattern by
+        perturbing the design vector at the initial point. With x0=zeros (all
+        turbines collocated at origin), x/y position changes create no wake
+        effect, so those columns never appear in the pattern. We replicate the
+        gridfarm formula with the configured spacing to get a spread-out layout.
+        """
+        layout = model_options.get("layout", {})
+        spacing_prim = float(layout.get("spacing_primary", 7.0))
+        spacing_sec = float(layout.get("spacing_secondary", spacing_prim))
+        N = self.N_turbines
+        N_sq = int(np.sqrt(N))
+
+        cy, cx = np.meshgrid(
+            np.arange(-((N_sq - 1) / 2), ((N_sq + 1) / 2)),
+            np.arange(-((N_sq - 1) / 2), ((N_sq + 1) / 2)),
+        )
+        if N == N_sq ** 2:
+            pass
+        elif N <= N_sq * (N_sq + 1):
+            # N is between N_sq² and N_sq*(N_sq+1): append a trailing row
+            cx = np.vstack([cx, ((N_sq + 1) / 2) * np.ones((N_sq,))])
+            cy = np.vstack([cy, np.arange(-((N_sq - 1) / 2), ((N_sq + 1) / 2))])
+        else:
+            # N is close to (N_sq+1)²: use a wider grid
+            cy, cx = np.meshgrid(
+                np.arange(-((N_sq) / 2), ((N_sq + 2) / 2)),
+                np.arange(-((N_sq) / 2), ((N_sq + 2) / 2)),
+            )
+
+        x_init = (cx.ravel()[:N] * spacing_prim * rotor_diameter).astype(float)
+        y_init = (cy.ravel()[:N] * spacing_sec * rotor_diameter).astype(float)
+        return x_init, y_init
+
     def setup(self):
         jl = ensure_flowfarm_loaded()
         self._jl = jl
@@ -196,9 +254,11 @@ class FLOWFarmComponent:
         ct_model = turbine_inputs["ct_model"]
         power_model = turbine_inputs["power_model"]
 
+        wind_resource_dict = windIO["site"]["energy_resource"]["wind_resource"]
+        resource_type = "timeseries" if "time" in wind_resource_dict else "probability"
         windrose_floris = templates.create_windresource_from_windIO(
             windIO,
-            resource_type="probability",
+            resource_type=resource_type,
         )
 
         ref_height = wind_resource.get("reference_height", hub_height)
@@ -207,8 +267,8 @@ class FLOWFarmComponent:
         wake_model_options = self._get_wake_model_options(model_options)
 
         # FLOWFarm expects one model object per turbine.
-        ct_models = jl.fill(ct_model, N_turbines)
-        power_models = jl.fill(power_model, N_turbines)
+        ct_models = jl.fill(ct_model, self.N_turbines)
+        power_models = jl.fill(power_model, self.N_turbines)
 
         flowfarm_module = jl.FLOWFarm
         windresource = self._build_wind_resource(
@@ -221,6 +281,7 @@ class FLOWFarmComponent:
         )
         model_set = self._build_wake_model_set(flowfarm_module, wake_model_options)
 
+        x_init, y_init = self._initial_turbine_positions(model_options, rotor_diameter)
         x0, farm, sparse_farm, sparse_struct = self._build_farm_structures(
             jl,
             flowfarm_module,
@@ -237,6 +298,8 @@ class FLOWFarmComponent:
             power_models,
             model_set,
             wake_model_options.get("tolerance", 1e-16),
+            x_init=x_init,
+            y_init=y_init,
         )
 
         self.flowfarm_module = flowfarm_module
@@ -356,6 +419,7 @@ class FLOWFarmBatchPower(templates.BatchFarmPowerTemplate, FLOWFarmComponent):
         turbine_powers = np.asarray(self.sparse_struct.turbine_powers)
 
         outputs["power_farm"] = state_powers
+        outputs["AEP_farm"] = float(state_powers.sum()) * 3600.0  # W*h, assuming 1-hour timesteps
         if (
             self.options["modeling_options"]
             .get("aero", {})
