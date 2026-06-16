@@ -336,10 +336,10 @@ class FLORISFarmComponent:
             )
 
         return (
-            np.sum(weighted_del_bladeroot),
-            np.sum(weighted_del_shaft),
-            np.sum(weighted_del_towerbase),
-            np.sum(weighted_del_yawbearings),
+            weighted_del_bladeroot,
+            weighted_del_shaft,
+            weighted_del_towerbase,
+            weighted_del_yawbearings,
         )
 
     def dump_floris_yamlfile(self, dir_output=None):
@@ -599,18 +599,17 @@ class FLORISSurrogateDELs(FLORISAEP):
 
     def compute(self, inputs, outputs):
         super().compute(inputs, outputs)
-        DEL_outputs = FLORISFarmComponent.get_DELs(self)
+        tDEL_outputs = FLORISFarmComponent.get_DELs(self)
+        print(f"DEBUG!!!!! shape blade_root: {tDEL_outputs[0].shape}")
+        DEL_outputs = [np.sum(v) for v in tDEL_outputs]
         outputs["blade_root_DEL"] = DEL_outputs[0]
         outputs["shaft_DEL"] = DEL_outputs[1]
         outputs["tower_base_DEL"] = DEL_outputs[2]
         outputs["yaw_bearings_DEL"] = DEL_outputs[3]
         outputs["AEP_farm"] = FLORISFarmComponent.get_AEP_farm(self)
 
-    def setup_partials(self):
-        FLORISFarmComponent.setup_partials(self)
 
-
-class FLORISCurtailment(templates.FarmAEPTemplate, FLORISSurrogateDELs):
+class FLORISCurtailment(FLORISSurrogateDELs):
     """
     Component class for computing an AEP analysis using FLORIS.
 
@@ -667,20 +666,16 @@ class FLORISCurtailment(templates.FarmAEPTemplate, FLORISSurrogateDELs):
 
     def initialize(self):
         super().initialize()  # run super class script first!
-        FLORISFarmComponent.initialize(self)  # add on FLORIS superclass
 
     @ard_logging.component_log_capture
     def setup(self):
         super().setup()  # run super class script first!
-        FLORISFarmComponent.setup(self)  # setup a FLORIS run
-
-        rated_turbine_power = 1e12 # set high to make sure that power setpoints are set to full power by default; TODO: update from turbine info provided?
 
         self.add_input(
-            "turbine_power_setpoints",
-            np.ones((self.N_wind_conditions, self.N_turbines)) * rated_turbine_power,  # default to no curtailment
-            units="kW",
-            desc="power setpoints to drive the turbines to for curtailment, with length `N_turbines`",
+            "turbine_power_pct_setpoints",
+            np.ones((self.N_wind_conditions, self.N_turbines)) * 100.0,  # default to no curtailment
+            units="percent",
+            desc="power percent-of-rated setpoints to drive the turbines to for curtailment, with length `N_turbines`",
         )
 
     @ard_logging.component_log_capture
@@ -703,14 +698,23 @@ class FLORISCurtailment(templates.FarmAEPTemplate, FLORISSurrogateDELs):
             ),
         )
         if "peak_shaving_fraction" in self.modeling_options.get("floris", {}):
-            self.fmodel.set_operation_model("peak-shaving")
+            raise NotImplementedError("modeling options specifies `peak_shaving_fraction` but the curtailment module...")
         if True:  # TODO: figure out how to enable through ard_system.yaml or otherwise to indicate that curtailment should be used
+
+            # set high to make sure that power setpoints are set to full power by default; TODO: update from turbine info provided?
+            rated_turbine_power = [
+                max(tdef["power_thrust_table"]["power"]) * 1.0e3  # put it in Watts
+                for tdef in self.fmodel.core.farm.turbine_definitions
+            ]
+
             self.fmodel.set_operation_model("simple-derating")
-            self.fmodel.set_power_setpoints(inputs["turbine_power_setpoints"])
+            self.fmodel.set(power_setpoints=inputs["turbine_power_pct_setpoints"]/100*rated_turbine_power)
 
         self.fmodel.run()
 
-        DEL_outputs = FLORISFarmComponent.get_DELs(self)
+        tDEL_outputs = FLORISFarmComponent.get_DELs(self)
+        print(f"DEBUG!!!!! shape blade_root: {tDEL_outputs[0].shape}")
+        DEL_outputs = [np.sum(v) for v in tDEL_outputs]
 
         # dump the yaml to re-run this case on demand
         FLORISFarmComponent.dump_floris_yamlfile(self, self.dir_floris)
@@ -725,8 +729,3 @@ class FLORISCurtailment(templates.FarmAEPTemplate, FLORISSurrogateDELs):
         outputs["shaft_DEL"] = DEL_outputs[1]
         outputs["tower_base_DEL"] = DEL_outputs[2]
         outputs["yaw_bearings_DEL"] = DEL_outputs[3]
-        outputs["AEP_farm"] = FLORISFarmComponent.get_AEP_farm(self)
-
-    @ard_logging.component_log_capture
-    def setup_partials(self):
-        FLORISFarmComponent.setup_partials(self)
