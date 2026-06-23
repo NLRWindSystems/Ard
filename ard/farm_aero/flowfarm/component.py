@@ -311,7 +311,7 @@ class FLOWFarmComponent:
     def _build_design_vector(self, inputs):
         x_turbines = np.asarray(inputs["x_turbines"], dtype=float)
         y_turbines = np.asarray(inputs["y_turbines"], dtype=float)
-        yaw_turbines = np.asarray(inputs["yaw_turbines"], dtype=float)
+        yaw_turbines = np.deg2rad(np.asarray(inputs["yaw_turbines"], dtype=float))
         return np.concatenate([x_turbines, y_turbines, yaw_turbines]).ravel()
 
     def _evaluate_sparse(self, x_eval_np):
