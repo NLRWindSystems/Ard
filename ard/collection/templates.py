@@ -63,24 +63,26 @@ class CollectionTemplate(om.ExplicitComponent):
         self.windIO_plant = self.modeling_options["windIO_plant"]
         self.N_turbines = self.modeling_options["layout"]["N_turbines"]
         self.N_substations = self.modeling_options["layout"]["N_substations"]
-        if "x_turbines" in self.modeling_options["layout"]:
-            self.x_turbines = self.modeling_options["layout"]["x_turbines"]
-        else:
-            self.x_turbines = (
-                self.windIO_plant.get("wind_farm", {})
-                .get("layouts", {})
-                .get("coordinates", {})
-                .get("x", np.zeros((self.N_turbines,)))
-            )
-        if "y_turbines" in self.modeling_options["layout"]:
-            self.y_turbines = self.modeling_options["layout"]["y_turbines"]
-        else:
-            self.y_turbines = (
-                self.windIO_plant.get("wind_farm", {})
-                .get("layouts", {})
-                .get("coordinates", {})
-                .get("y", np.zeros((self.N_turbines,)))
-            )
+        self.x_turbines = np.zeros((self.N_turbines,))
+        self.y_turbines = np.zeros((self.N_turbines,))
+        # if "x_turbines" in self.modeling_options["layout"]:
+        #     self.x_turbines = self.modeling_options["layout"]["x_turbines"]
+        # else:
+        #     self.x_turbines = (
+        #         self.windIO_plant.get("wind_farm", {})
+        #         .get("layouts", {})
+        #         .get("coordinates", {})
+        #         .get("x", np.zeros((self.N_turbines,)))
+        #     )
+        # if "y_turbines" in self.modeling_options["layout"]:
+        #     self.y_turbines = self.modeling_options["layout"]["y_turbines"]
+        # else:
+        #     self.y_turbines = (
+        #         self.windIO_plant.get("wind_farm", {})
+        #         .get("layouts", {})
+        #         .get("coordinates", {})
+        #         .get("y", np.zeros((self.N_turbines,)))
+        #     )
         self.x_substations = np.array(
             [
                 substation["electrical_substation"]["coordinates"]["x"]

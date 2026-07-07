@@ -284,12 +284,12 @@ class FLORISFarmComponent:
         else:
             return thrust_turbines.T
 
-    def get_DELs(self):
+    def get_raw_DELs(self):
         SATI = self.fmodel.get_turbine_SATI() * 100
         SAWS = self.fmodel.get_turbine_SAWS()
         # TODO: This should work, as it did for the TORQUE results, but it was just set to 100% for no de-rating, so should verify for derated values
         turbine_powers_percent = self.fmodel.get_turbine_powers_percent().flatten()
-        turbine_powers_percent = np.ones_like(turbine_powers_percent) * 100.
+        # turbine_powers_percent = np.ones_like(turbine_powers_percent) * 100.
 
         SATI_collapsed = SATI.reshape(-1, SATI.shape[-1])
         SAWS_collapsed = SAWS.reshape(-1, SAWS.shape[-1])
@@ -312,6 +312,16 @@ class FLORISFarmComponent:
         del_shaft_ann = ANN_DEL_Shaft(input_data)
         del_towerbase_ann = ANN_DEL_TowerBase(input_data)
         del_yawbearings_ann = ANN_DEL_YawBearings(input_data)
+
+        return (
+            del_bladeroot_ann,
+            del_shaft_ann,
+            del_towerbase_ann,
+            del_yawbearings_ann,
+        )
+
+    def get_DELs(self):
+        del_bladeroot_ann, del_shaft_ann, del_towerbase_ann, del_yawbearings_ann = FLORISFarmComponent.get_raw_DELs(self)
 
         # Weight predictions by frequency of wind conditions
         weighted_del_bladeroot = np.zeros_like(del_towerbase_ann)
@@ -712,7 +722,8 @@ class FLORISCurtailment(FLORISSurrogateDELs):
 
         self.fmodel.run()
 
-        tDEL_outputs = FLORISFarmComponent.get_DELs(self)
+        self.rDEL_outputs = FLORISFarmComponent.get_raw_DELs(self)
+        tDEL_outputs = self.tDEL_outputs = FLORISFarmComponent.get_DELs(self)
         print(f"DEBUG!!!!! shape blade_root: {tDEL_outputs[0].shape}")
         DEL_outputs = [np.sum(v) for v in tDEL_outputs]
 
