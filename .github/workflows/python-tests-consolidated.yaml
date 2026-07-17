@@ -84,7 +84,20 @@ jobs:
         pip install .[dev]
     - name: Run unit tests with coverage
       run: |
-        pytest --cov=ard --cov-fail-under=80 test/ard/unit
+        export MPLBACKEND=Agg
+        pytest --cov=ard --cov-fail-under=80 test/ard/unit -m "not julia"
+
+        # If no julia-marked tests are present in test/ard/unit, pytest exits 5.
+        # Treat that as success so CI remains stable across marker rollout.
+        set +e
+        pytest --cov=ard --cov-append test/ard/unit -m "julia"
+        rc=$?
+        set -e
+        if [ "$rc" -ne 0 ] && [ "$rc" -ne 5 ]; then
+          exit "$rc"
+        fi
+
+        pytest --cov=ard --cov-append test/flowfarm/unit -m "not julia"
 
   test-system:
     name: Run system tests

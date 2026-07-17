@@ -11,8 +11,8 @@ systems:
     systems:
       layout:
         type: component
-        module: ard.layout.gridfarm
-        object: GridFarmLayout
+        module: ard.layout.cartesian
+        object: CartesianLayout
         promotes: ["*"]
         kwargs:
           modeling_options:
@@ -34,8 +34,8 @@ systems:
       modeling_options:
   landuse:
     type: component
-    module: ard.layout.gridfarm
-    object: GridFarmLanduse
+    module: ard.layout.cartesian
+    object: CartesianFarmLanduse
     promotes: ["*"]
     kwargs:
       modeling_options:
@@ -97,3 +97,10 @@ systems:
 connections:
   - ["AEP_farm", "financese.plant_aep_in"]
   - ["landbosse.total_capex_kW", "financese.bos_per_kW"]
+  # Connect CartesianLayout outputs to root-level components that need them
+  - ["layout2aep.x_turbines", "boundary.x_turbines"]
+  - ["layout2aep.y_turbines", "boundary.y_turbines"]
+  - ["layout2aep.x_turbines", "collection.x_turbines"]
+  - ["layout2aep.y_turbines", "collection.y_turbines"]
+  - ["layout2aep.x_turbines", "spacing_constraint.x_turbines"]
+  - ["layout2aep.y_turbines", "spacing_constraint.y_turbines"]

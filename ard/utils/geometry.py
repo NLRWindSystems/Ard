@@ -102,7 +102,7 @@ def distance_multi_point_to_multi_polygon_ray_casting(
 
     # Convert boundary_vertices to JAX arrays
     boundary_vertices_jax = [
-        jnp.asarray(poly, dtype=jnp.float32) for poly in boundary_vertices
+        jnp.asarray(poly, dtype=jnp.float64) for poly in boundary_vertices
     ]
 
     # Create a function for each polygon that computes distance
@@ -231,8 +231,8 @@ def distance_point_to_polygon_ray_casting(
     """
 
     # Ensure inputs are JAX arrays with explicit data types
-    point = jnp.asarray(point, dtype=jnp.float32)
-    vertices = jnp.asarray(vertices, dtype=jnp.float32)
+    point = jnp.asarray(point, dtype=jnp.float64)
+    vertices = jnp.asarray(vertices, dtype=jnp.float64)
 
     # Add the first vertex to the end to close the polygon loop
     vertices = jnp.vstack([vertices, vertices[0]])

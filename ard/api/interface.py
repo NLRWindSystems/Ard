@@ -1,4 +1,5 @@
 import importlib
+import numpy as np
 import openmdao.api as om
 from openmdao.drivers.doe_driver import DOEGenerator
 from wisdem.optimization_drivers.nsga2_driver import NSGA2Driver
@@ -306,16 +307,15 @@ def set_up_system_recursive(
                     prob.add_recorder(recorder)
                     prob.driver.add_recorder(recorder)
 
-        # TODO! THIS IS NECESSARY FOR SOME REASON WHEN RUNNING FREE
-        # OPTIMIZATIONS. THIS SHOULDN'T BE NEEDED...
+        coords = modeling_options["windIO_plant"]["wind_farm"]["layouts"]["coordinates"]
         prob.model.set_input_defaults(
             "x_turbines",
-            # input_dict["modeling_options"]["windIO_plant"]["wind_farm"]["layouts"]["coordinates"]["x"],
+            val=np.array(coords["x"], dtype=float),
             units="m",
         )
         prob.model.set_input_defaults(
             "y_turbines",
-            # input_dict["modeling_options"]["windIO_plant"]["wind_farm"]["layouts"]["coordinates"]["y"],
+            val=np.array(coords["y"], dtype=float),
             units="m",
         )
 

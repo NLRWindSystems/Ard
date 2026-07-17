@@ -65,6 +65,12 @@ class LayoutTemplate(om.ExplicitComponent):
             desc="turbine location in y-direction",
         )
         self.add_output(
+            "yaw_turbines",
+            np.zeros((self.N_turbines,)),
+            units="deg",
+            desc="turbine yaw angle from modeling options",
+        )
+        self.add_output(
             "spacing_effective_primary",
             0.0,
             desc="effective spacing in x-dimension for BOS calculation",
