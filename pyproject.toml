@@ -45,7 +45,7 @@ dependencies = [
   "marmot-agents",
   "openmdao",
   "shapely",
-  "jax",
+  "jax>=0.9.2",
   "optiwindnet>=0.0.6",
   "statsmodels",
   "highspy",
