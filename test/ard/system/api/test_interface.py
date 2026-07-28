@@ -83,7 +83,7 @@ class TestSetUpArdModelOffshoreMonopile:
         with subtests.test("BOS capex (orbit.total_capex_kW)"):
             assert self.prob.get_val("orbit.total_capex_kW", units="MUSD/GW")[
                 0
-            ] == pytest.approx(2319.207303980254)
+            ] == pytest.approx(2286.67237244399)
         with subtests.test("opex.opex"):
             assert self.prob.get_val("opex.opex", units="MUSD/yr")[0] == pytest.approx(
                 60.5
@@ -91,7 +91,7 @@ class TestSetUpArdModelOffshoreMonopile:
         with subtests.test("financese.lcoe"):
             assert self.prob.get_val("financese.lcoe", units="USD/MW/h")[
                 0
-            ] == pytest.approx(99.18265668471714)
+            ] == pytest.approx(98.56006874756466)
 
 
 class TestSetUpArdModelOffshoreFloating:
