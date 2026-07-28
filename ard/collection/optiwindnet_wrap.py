@@ -5,7 +5,7 @@ import numpy as np
 
 from optiwindnet.mesh import make_planar_embedding
 from optiwindnet.interarraylib import L_from_site
-from optiwindnet.heuristics import EW_presolver
+from optiwindnet.heuristics import constructor
 from optiwindnet.MILP import OWNWarmupFailed, solver_factory, ModelOptions
 
 from . import templates
@@ -153,6 +153,18 @@ class OptiwindnetCollection(templates.CollectionTemplate):
     def setup(self):
         """Setup of OM component."""
         super().setup()
+        self.constructor_args = {}
+        model_options = self.modeling_options["collection"]["model_options"]
+        if model_options.get("feeder_limit") == "unlimited":
+            self.constructor_args["straight_feeder_route"] = (
+                model_options.get("feeder_route") == "straight"
+            )
+            if model_options.get("topology") == "branched":
+                self.constructor_args["method"] = "rootlust"
+            elif model_options.get("topology") == "radial":
+                self.constructor_args["method"] = "radial_EW"
+            else:
+                self.constructor_args.clear()
 
     def setup_partials(self):
         """Setup of OM component gradients."""
@@ -192,12 +204,12 @@ class OptiwindnetCollection(templates.CollectionTemplate):
         # start from previous solution if available, else from heuristic if it fits
         if self.S_previous is not None:
             S_warm = self.S_previous
-        elif (
-            model_options.get("topology") == "branched"
-            and model_options.get("feeder_limit") == "unlimited"
-            and model_options.get("feeder_route") == "segmented"
-        ):
-            S_warm = EW_presolver(A, capacity=max_turbines_per_string)
+        elif self.constructor_args:
+            S_warm = constructor(
+                A,
+                capacity=max_turbines_per_string,
+                **self.constructor_args,
+            )
         else:
             S_warm = None
 
