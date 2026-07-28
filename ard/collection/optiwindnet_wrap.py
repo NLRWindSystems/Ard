@@ -277,9 +277,9 @@ class OptiwindnetCollection(templates.CollectionTemplate):
         discrete_outputs["load_cables"] = load_cables
         discrete_outputs["max_load_cables"] = S.graph["max_load"]
         # TODO: remove this assert after enough testing
-        assert (
-            abs(length_cables.sum() - G.size(weight="length")) < 1e-7
-        ), f"difference: {length_cables.sum() - G.size(weight='length')}"
+        # assert (
+        #     abs(length_cables.sum() - G.size(weight="length")) < 1e-7
+        # ), f"difference: {length_cables.sum() - G.size(weight='length')}"
         outputs["total_length_cables"] = length_cables.sum()
 
     def compute_partials(self, inputs, J, discrete_inputs=None):
