@@ -18,7 +18,7 @@ include = ["ard", "ard.*"]
 
 [project]
 name = "ard-nrel"
-version = "0.1.0-beta4"
+version = "0.1.0-beta5"
 authors = [
   {name = "Cory Frontin", email = "cory.frontin@nrel.gov"},
   {name = "Rafael Mudafort", email = "rafael.mudafort@nrel.gov"},
@@ -40,13 +40,13 @@ classifiers = [
 dependencies = [
   "numpy",
   "floris>=4.3",
-  "wisdem==4.0.5",
+  "wisdem",
   "NLopt",
   "marmot-agents",
   "openmdao",
   "shapely",
   "jax",
-  "optiwindnet>=0.0.6",
+  "optiwindnet>=0.2.2",
   "statsmodels",
   "highspy",
   "pyyaml",

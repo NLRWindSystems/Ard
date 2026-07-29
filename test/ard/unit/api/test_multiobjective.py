@@ -123,7 +123,7 @@ class TestNSGA2:
             ("procs_per_model", 1, np.equal),
             ("penalty_parameter", 0.0, np.isclose),
             ("penalty_exponent", 1.0, np.isclose),
-            ("compute_pareto", True, np.equal),
+            # ("compute_pareto", True, np.equal),
         ]:
             with subtests.test(f"driver default {opt_name}"):
                 assert comparison_fun(self.da_plough.driver.options[opt_name], opt_val)

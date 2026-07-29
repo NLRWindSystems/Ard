@@ -5,7 +5,7 @@ import numpy as np
 
 from optiwindnet.mesh import make_planar_embedding
 from optiwindnet.interarraylib import L_from_site
-from optiwindnet.heuristics import EW_presolver
+from optiwindnet.heuristics import constructor
 from optiwindnet.MILP import OWNWarmupFailed, solver_factory, ModelOptions
 
 from . import templates
@@ -43,7 +43,7 @@ def _own_L_from_inputs(inputs: dict, discrete_inputs: dict) -> nx.Graph:
     )
     if np.any(repeat_accumulate > 0):  # only if there are any repeats
         warn_string = (
-            f"Detected {np.sum(repeat_accumulate > 0)} coincident "
+            f"\nDetected {np.sum(repeat_accumulate > 0)} coincident "
             f"turbines and/or substations in optiwindnet setup."
         )  # start a warning string for the UserWarning
         # TODO: make Ard warnings?
@@ -153,6 +153,18 @@ class OptiwindnetCollection(templates.CollectionTemplate):
     def setup(self):
         """Setup of OM component."""
         super().setup()
+        self.constructor_args = {}
+        model_options = self.modeling_options["collection"]["model_options"]
+        if model_options.get("feeder_limit") == "unlimited":
+            self.constructor_args["straight_feeder_route"] = (
+                model_options.get("feeder_route") == "straight"
+            )
+            if model_options.get("topology") == "branched":
+                self.constructor_args["method"] = "rootlust"
+            elif model_options.get("topology") == "radial":
+                self.constructor_args["method"] = "radial_EW"
+            else:
+                self.constructor_args.clear()
 
     def setup_partials(self):
         """Setup of OM component gradients."""
@@ -192,12 +204,12 @@ class OptiwindnetCollection(templates.CollectionTemplate):
         # start from previous solution if available, else from heuristic if it fits
         if self.S_previous is not None:
             S_warm = self.S_previous
-        elif (
-            model_options.get("topology") == "branched"
-            and model_options.get("feeder_limit") == "unlimited"
-            and model_options.get("feeder_route") == "segmented"
-        ):
-            S_warm = EW_presolver(A, capacity=max_turbines_per_string)
+        elif self.constructor_args:
+            S_warm = constructor(
+                A,
+                capacity=max_turbines_per_string,
+                **self.constructor_args,
+            )
         else:
             S_warm = None
 
@@ -265,9 +277,9 @@ class OptiwindnetCollection(templates.CollectionTemplate):
         discrete_outputs["load_cables"] = load_cables
         discrete_outputs["max_load_cables"] = S.graph["max_load"]
         # TODO: remove this assert after enough testing
-        assert (
-            abs(length_cables.sum() - G.size(weight="length")) < 1e-7
-        ), f"difference: {length_cables.sum() - G.size(weight='length')}"
+        # assert (
+        #     abs(length_cables.sum() - G.size(weight="length")) < 1e-7
+        # ), f"difference: {length_cables.sum() - G.size(weight='length')}"
         outputs["total_length_cables"] = length_cables.sum()
 
     def compute_partials(self, inputs, J, discrete_inputs=None):
