@@ -173,6 +173,56 @@ class TestOptiWindNetCollection:
                 assert np.allclose(validation_data[key], pyrite_data[key], rtol=5e-3)
 
 
+class TestOptiWindNetCollectionPlanarEmbeddingRetry:
+    """
+    Regression test for the N_turbines=5 sweep crash: optiwindnet's
+    make_planar_embedding KeyError'd on a degenerate (collinear) turbine/substation
+    configuration. Real degenerate geometries that trigger this are hard to pin down
+    deterministically (they depend on exact mid-SNOPT-iterate float coordinates), so
+    this exercises the retry path itself by forcing the first call to fail the same
+    way, and checking OptiwindnetCollection recovers via the collinearity-breaking
+    perturbation instead of propagating the KeyError.
+    """
+
+    def test_retries_with_perturbation_on_keyerror(self, monkeypatch):
+        n_turbines = 5
+        theta_turbines = np.linspace(0.0, 2 * np.pi, n_turbines + 1)[:-1]
+        x_turbines = 7.0 * 130.0 * np.sin(theta_turbines)
+        y_turbines = 7.0 * 130.0 * np.cos(theta_turbines)
+        x_substations = np.array([0.0])
+        y_substations = np.array([0.0])
+        modeling_options = make_modeling_options(
+            x_turbines, y_turbines, x_substations, y_substations
+        )
+
+        model = om.Group()
+        model.add_subsystem(
+            "collection",
+            ard_own.OptiwindnetCollection(modeling_options=modeling_options),
+        )
+        prob = om.Problem(model)
+        prob.setup()
+
+        real_make_planar_embedding = ard_own.make_planar_embedding
+        calls = []
+
+        def flaky_make_planar_embedding(L):
+            calls.append(L)
+            if len(calls) == 1:
+                raise KeyError("synthetic degeneracy for test")
+            return real_make_planar_embedding(L)
+
+        monkeypatch.setattr(
+            ard_own, "make_planar_embedding", flaky_make_planar_embedding
+        )
+
+        with pytest.warns(UserWarning, match="make_planar_embedding failed"):
+            prob.run_model()
+
+        assert len(calls) == 2
+        assert prob.get_val("collection.total_length_cables") > 0.0
+
+
 class TestOptiWindNetCollection12Turbines:
 
     def setup_method(self):

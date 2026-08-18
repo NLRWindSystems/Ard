@@ -11,7 +11,9 @@ from optiwindnet.MILP import OWNWarmupFailed, solver_factory, ModelOptions
 from . import templates
 
 
-def _own_L_from_inputs(inputs: dict, discrete_inputs: dict) -> nx.Graph:
+def _own_L_from_inputs(
+    inputs: dict, discrete_inputs: dict, break_collinearity: bool = False
+) -> nx.Graph:
     # get the metadata and data for the OWN warm-starter from the inputs
     T = len(inputs["x_turbines"])
     R = len(inputs["x_substations"])
@@ -73,6 +75,27 @@ def _own_L_from_inputs(inputs: dict, discrete_inputs: dict) -> nx.Graph:
 
         # store the adjustments
         VertexCTR += adjustments
+
+    if break_collinearity:
+        # Nudge every vertex by a tiny (~1 micron), deterministic, direction-unique
+        # offset -- even without exact duplicates, an axis-aligned grid (e.g.
+        # make_basic_grid_turbine_layout's initial layout, or a mid-optimization SNOPT
+        # iterate that lands turbines back on a grid line) can leave 3+ points exactly
+        # collinear, which optiwindnet's constrained-Delaunay make_planar_embedding
+        # cannot handle (KeyError deep in its mesh code -- observed crashing the
+        # N_turbines=5 sweep run). Only applied on retry after that KeyError (see
+        # compute(), below) so the normal, non-degenerate case is untouched -- this
+        # perturbs every point, not just the ones actually causing the degeneracy, and
+        # would otherwise change reference cable lengths for every run. Golden-angle-
+        # spaced directions guarantee no two vertices' offsets point the same way, so no
+        # coincidental collinearity survives; magnitude matches the duplicate-
+        # perturbation epsilon above, far below any physically meaningful cable-routing
+        # distance.
+        golden_angle = np.pi * (3.0 - np.sqrt(5.0))
+        step = golden_angle * np.arange(len(VertexCTR))
+        VertexCTR = VertexCTR + perturbation_eps * np.stack(
+            [np.cos(step), np.sin(step)], axis=1
+        )
 
     # apply the adjustments
     VertexC[:T, :] = VertexCTR[:T, :]
@@ -183,8 +206,22 @@ class OptiwindnetCollection(templates.CollectionTemplate):
         L = _own_L_from_inputs(inputs, discrete_inputs)
         T = L.graph["T"]
 
-        # create planar embedding and set of available links
-        P, A = make_planar_embedding(L)
+        # create planar embedding and set of available links. optiwindnet's
+        # constrained-Delaunay triangulation can KeyError on an exactly-collinear (but
+        # not coincident) point configuration -- e.g. make_basic_grid_turbine_layout's
+        # axis-aligned initial grid, or a mid-optimization SNOPT iterate that lands back
+        # on one (observed crashing the N_turbines=5 sweep run). Retry once with a tiny
+        # collinearity-breaking nudge rather than failing the whole solve outright.
+        try:
+            P, A = make_planar_embedding(L)
+        except KeyError:
+            warn(
+                "optiwindnet's make_planar_embedding failed on the current turbine/"
+                "substation configuration (likely an exactly-collinear degeneracy); "
+                "retrying with a tiny collinearity-breaking perturbation."
+            )
+            L = _own_L_from_inputs(inputs, discrete_inputs, break_collinearity=True)
+            P, A = make_planar_embedding(L)
 
         solver = solver_factory(solver_name)
 
@@ -242,17 +279,33 @@ class OptiwindnetCollection(templates.CollectionTemplate):
                     # feeder <u, v> has a straight route
                     length_cables[i] = d2roots[v, u]
                 else:
-                    # feeder <u, v> is segmented (detoured route)
+                    # feeder <u, v> is segmented (detoured route). v may have more than
+                    # one neighboring detour hop with load == this feeder's load (two
+                    # sibling branches of equal size, more likely at larger N) --
+                    # matching on load alone picks whichever candidate networkx iterates
+                    # to first, which can be the wrong branch and silently miscompute
+                    # length_cables (only caught downstream by the sum-consistency assert
+                    # below, e.g. the N_turbines=100 sweep run). Disambiguate by walking
+                    # each candidate chain of detour (Steiner) hops to its end and keeping
+                    # the one that actually terminates at substation u.
                     v_neighbors = G[v]
-                    for cur_hop in v_neighbors:
-                        if cur_hop >= T and v_neighbors[cur_hop]["load"] == load:
+                    for candidate in v_neighbors:
+                        if candidate < T or v_neighbors[candidate]["load"] != load:
+                            continue
+                        hop, prev_hop = candidate, v
+                        chain_length = v_neighbors[candidate]["length"]
+                        while hop >= T:
+                            s, t = G[hop]
+                            hop, prev_hop = (s if t == prev_hop else t), hop
+                            chain_length += G[hop][prev_hop]["length"]
+                        if hop == u:
+                            length_cables[i] = chain_length
                             break
-                    length_cables[i] = v_neighbors[cur_hop]["length"]
-                    prev_hop = v
-                    while cur_hop >= T:
-                        s, t = G[cur_hop]
-                        cur_hop, prev_hop = (s if t == prev_hop else t), cur_hop
-                        length_cables[i] += G[cur_hop][prev_hop]["length"]
+                    else:
+                        raise RuntimeError(
+                            f"OptiwindnetCollection: no detour chain from turbine {v} "
+                            f"with load {load} reaches substation {u}"
+                        )
             else:
                 # link (u, v) is not a feeder, so A has length data
                 length_cables[i] = A[u][v]["length"]
