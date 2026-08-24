@@ -55,6 +55,17 @@ class SurrogateFarmPower(om.ExplicitComponent):
         self.options.declare("n_timesteps", types=int, default=None)
 
     def setup(self):
+        # build_surrogate.py pickles PerStatePowerSurrogate while running as
+        # __main__, so it only unpickles cleanly if that class is also
+        # visible as __main__.PerStatePowerSurrogate in the loading process.
+        import sys
+
+        import build_surrogate
+
+        sys.modules["__main__"].PerStatePowerSurrogate = (
+            build_surrogate.PerStatePowerSurrogate
+        )
+
         with open(self.options["surrogate_pkl_path"], "rb") as fh:
             pkl = pickle.load(fh)
         self._f_interp = pkl["interpolator"]
