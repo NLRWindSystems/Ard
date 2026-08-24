@@ -24,9 +24,9 @@ class SurrogateFarmPower(om.ExplicitComponent):
     Options
     -------
     surrogate_pkl_path : str
-        path to outputs/surrogate_f_power.pkl from build_surrogate.py
+        path to outputs/surrogates/surrogate_f_power.pkl from build_surrogate.py
     wind_resource_npz_path : str
-        path to outputs/n_turbines_sweep_wind_resource.npz (hourly
+        path to outputs/sweeps/n_turbines_sweep/wind_resource.npz (hourly
         wind_speed/wind_direction arrays) from build_surrogate.py
     n_timesteps : int, optional
         number of hours (from the start of the wind resource) to evaluate --

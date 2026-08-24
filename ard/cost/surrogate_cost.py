@@ -17,7 +17,7 @@ class SurrogateWindCost(om.ExplicitComponent):
     Options
     -------
     surrogate_pkl_path : str
-        path to outputs/surrogate_g_cost.pkl from build_surrogate.py
+        path to outputs/surrogates/surrogate_g_cost.pkl from build_surrogate.py
 
     Inputs
     ------
