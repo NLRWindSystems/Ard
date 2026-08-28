@@ -5,7 +5,7 @@ import numpy as np
 
 from optiwindnet.mesh import make_planar_embedding
 from optiwindnet.interarraylib import L_from_site
-from optiwindnet.heuristics import EW_presolver
+from optiwindnet.heuristics import constructor as EW_presolver
 from optiwindnet.MILP import OWNWarmupFailed, solver_factory, ModelOptions
 
 from . import templates
@@ -191,7 +191,9 @@ class OptiwindnetCollection(templates.CollectionTemplate):
             and model_options.get("feeder_limit") == "unlimited"
             and model_options.get("feeder_route") == "segmented"
         ):
-            S_warm = EW_presolver(A, capacity=max_turbines_per_string)
+            S_warm = EW_presolver(
+                A, capacity=max_turbines_per_string, method="esau_williams"
+            )
         else:
             S_warm = None
 
