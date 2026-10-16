@@ -56,7 +56,7 @@ def update_layout(n_turbines, windio_filepath, xlim, ylim):
     return x_flat, y_flat
 
 
-def run_example():
+def run_example(make_plots, optimize):
 
     # load input
     input_dict = load_yaml("./inputs/ard_system.yaml")
@@ -88,16 +88,15 @@ def run_example():
     print("\n\nRESULTS:\n")
     pp.pprint(test_data)
     print("\n\n")
-    plot_layout(
-        prob,
-        input_dict=input_dict,
-        show_image=True,
-        include_cable_routing=True,
-        save_path="initial_wind_farm_layout.png",
-        save_kwargs={"transparent": True},
-    )
-
-    optimize = True  # set to False to skip optimization
+    if make_plots:
+        plot_layout(
+            prob,
+            input_dict=input_dict,
+            show_image=True,
+            include_cable_routing=True,
+            save_path="initial_wind_farm_layout.png",
+            save_kwargs={"transparent": True},
+        )
 
     if optimize:
 
@@ -127,17 +126,18 @@ def run_example():
         pp.pprint(test_data)
         print("\n\n")
 
-        plot_layout(
-            prob,
-            input_dict=input_dict,
-            show_image=True,
-            include_cable_routing=True,
-            save_path="final_wind_farm_layout.png",
-            save_kwargs={"transparent": True},
-        )
+        if make_plots:
+            plot_layout(
+                prob,
+                input_dict=input_dict,
+                show_image=True,
+                include_cable_routing=True,
+                save_path="final_wind_farm_layout.png",
+                save_kwargs={"transparent": True},
+            )
 
 
 if __name__ == "__main__":
 
-    run_example()
+    run_example(make_plots=False, optimize=False)
     # update_layout(65, "inputs/windio.yaml", xlim=[-3000, 3000], ylim=[-3000, 3000])

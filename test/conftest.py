@@ -10,6 +10,7 @@ def pytest_sessionfinish(session, exitstatus):
         for root, dirs, files in os.walk(
             str(pytest_out_dir), topdown=False
         ):  # walk the directory
+            root = Path(root)
             for name in files:
                 Path(root, name).unlink()  # remove subdirectory files, and
             for name in dirs:

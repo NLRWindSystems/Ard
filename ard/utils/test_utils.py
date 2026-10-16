@@ -48,11 +48,13 @@ def pyrite_validator(
 
             if not validation_matches:
                 print(f"for variable {k}:", file=sys.stderr)
+                prefix = "\t"
                 print(
-                    f"\t{sum_isclose} values match of {vd_size} total validation values",
+                    prefix
+                    + f"{sum_isclose} values match of {vd_size} total validation values",
                     file=sys.stderr,
                 )
-                print(f"\tto a tolerance of {rtol_val:e}", file=sys.stderr)
+                print(prefix + f"to a tolerance of {rtol_val:e}", file=sys.stderr)
                 print(f"pyrite data for {k}: {v}", file=sys.stderr)
                 print(
                     f"computed data for {k}: {data_for_validation[k]}", file=sys.stderr
