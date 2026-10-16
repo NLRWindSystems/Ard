@@ -43,7 +43,7 @@ dependencies = [
   "wisdem<4.2.8",
   "NLopt",
   "marmot-agents",
-  "openmdao",
+  "openmdao[doe]",
   "shapely",
   "jax",
   "optiwindnet>=0.2.2,<0.3",
