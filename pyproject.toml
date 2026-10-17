@@ -39,14 +39,14 @@ classifiers = [
 ]
 dependencies = [
   "numpy",
-  "floris>=4.3",
-  "wisdem",
+  "floris>=4.7",
+  "wisdem<4.2.8",
   "NLopt",
   "marmot-agents",
-  "openmdao",
+  "openmdao[doe]<3.45.1",
   "shapely",
   "jax",
-  "optiwindnet>=0.2.2",
+  "optiwindnet>=0.2.2,<0.3",
   "statsmodels",
   "highspy",
   "pyyaml",
