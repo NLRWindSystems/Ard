@@ -46,7 +46,7 @@ dependencies = [
   "openmdao[doe]<3.45.1",
   "shapely",
   "jax",
-  "optiwindnet>=0.2.2,<0.3",
+  "optiwindnet>=0.3.2,<0.4",
   "statsmodels",
   "highspy",
   "pyyaml",

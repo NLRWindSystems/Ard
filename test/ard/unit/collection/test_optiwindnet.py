@@ -173,6 +173,97 @@ class TestOptiWindNetCollection:
                 assert np.allclose(validation_data[key], pyrite_data[key], rtol=5e-3)
 
 
+@pytest.mark.usefixtures("subtests")
+class TestOptiWindNetCollectionNetworkConstraints:
+
+    def setup_method(self):
+
+        # create the farm layout specification (same as TestOptiWindNetCollection)
+        n_turbines = 25
+        x_turbines, y_turbines = [
+            130.0 * 7 * v.flatten()
+            for v in np.meshgrid(
+                np.linspace(-2, 2, int(np.sqrt(n_turbines)), dtype=int),
+                np.linspace(-2, 2, int(np.sqrt(n_turbines)), dtype=int),
+            )
+        ]
+        x_substations = np.array([-500.0, 500.0], dtype=np.float64)
+        y_substations = np.array([-500.0, 500.0], dtype=np.float64)
+
+        self.modeling_options = make_modeling_options(
+            x_turbines=x_turbines,
+            y_turbines=y_turbines,
+            x_substations=x_substations,
+            y_substations=y_substations,
+        )
+
+        # replace the legacy model_options with the equivalent network_constraints
+        del self.modeling_options["collection"]["model_options"]
+        self.modeling_options["collection"]["network_constraints"] = dict(
+            topology="branched",
+            feeder_route="segmented",
+        )
+
+    def test_compute_pyrite(self, subtests):
+
+        # create the OpenMDAO model
+        model = om.Group()
+        model.add_subsystem(
+            "collection",
+            ard_own.OptiwindnetCollection(
+                modeling_options=self.modeling_options,
+            ),
+        )
+        prob = om.Problem(model)
+        prob.setup()
+
+        # run optiwindnet, which should not warn (e.g. about deprecated options)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            prob.run_model()
+
+        # collect data to validate
+        validation_data = {
+            "terse_links": prob.get_val("collection.terse_links"),
+            "length_cables": prob.get_val("collection.length_cables"),
+            "load_cables": prob.get_val("collection.load_cables"),
+            "total_length_cables": prob.get_val("collection.total_length_cables"),
+            "max_load_cables": prob.get_val("collection.max_load_cables"),
+        }
+
+        # validate data against the same pyrite file as the model_options case
+        pyrite_data = ard.utils.test_utils.pyrite_validator(
+            validation_data,
+            Path(__file__).parent / "test_optiwindnet_pyrite.npz",
+            load_only=True,
+        )
+
+        for key in validation_data:
+            with subtests.test(key):
+                assert np.allclose(validation_data[key], pyrite_data[key], rtol=5e-3)
+
+    def test_both_options_error(self):
+
+        # giving both network_constraints and model_options is ambiguous
+        modeling_options = copy.deepcopy(self.modeling_options)
+        modeling_options["collection"]["model_options"] = dict(
+            topology="branched",
+            feeder_route="segmented",
+            feeder_limit="unlimited",
+        )
+
+        model = om.Group()
+        model.add_subsystem(
+            "collection",
+            ard_own.OptiwindnetCollection(
+                modeling_options=modeling_options,
+            ),
+        )
+        prob = om.Problem(model)
+        with pytest.raises(ValueError, match="not both"):
+            prob.setup()
+
+
 class TestOptiWindNetCollection12Turbines:
 
     def setup_method(self):

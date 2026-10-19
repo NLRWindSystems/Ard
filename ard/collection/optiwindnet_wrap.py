@@ -4,9 +4,12 @@ import networkx as nx
 import numpy as np
 
 from optiwindnet.mesh import make_planar_embedding
-from optiwindnet.interarraylib import L_from_site
+from optiwindnet.converting import L_from_site
 from optiwindnet.heuristics import constructor
-from optiwindnet.MILP import OWNWarmupFailed, solver_factory, ModelOptions
+from optiwindnet.types import OWNWarmupFailed
+from optiwindnet.constraints import NetworkConstraints
+from optiwindnet.MILP import solver_factory
+from optiwindnet.MILP._core import _constraints_from_options
 
 from . import templates
 
@@ -153,15 +156,41 @@ class OptiwindnetCollection(templates.CollectionTemplate):
     def setup(self):
         """Setup of OM component."""
         super().setup()
-        self.constructor_args = {}
-        model_options = self.modeling_options["collection"]["model_options"]
-        if model_options.get("feeder_limit") == "unlimited":
-            self.constructor_args["straight_feeder_route"] = (
-                model_options.get("feeder_route") == "straight"
+        # network constraints are given either as optiwindnet `NetworkConstraints`
+        # arguments (`network_constraints`) or as the legacy `model_options`
+        collection_options = self.modeling_options["collection"]
+        if "network_constraints" in collection_options:
+            if "model_options" in collection_options:
+                raise ValueError(
+                    "give either network_constraints or model_options, not both"
+                )
+            constraints = NetworkConstraints(
+                **collection_options["network_constraints"]
             )
-            if model_options.get("topology") == "branched":
+        else:
+            # stopgap until optiwindnet v0.4, which drops the legacy options
+            constraints = _constraints_from_options(
+                **collection_options.get("model_options", {})
+            )
+        self.constraints = constraints
+
+        # the heuristic warm-start only applies if the feeder count is free
+        self.constructor_args = {}
+        if all(
+            value is None
+            for value in (
+                constraints.feeders,
+                constraints.max_feeders,
+                constraints.substation_feeders,
+                constraints.max_substation_feeders,
+            )
+        ):
+            self.constructor_args["straight_feeder_route"] = (
+                constraints.feeder_route == "straight"
+            )
+            if constraints.topology == "branched":
                 self.constructor_args["method"] = "rootlust"
-            elif model_options.get("topology") == "radial":
+            elif constraints.topology == "radial":
                 self.constructor_args["method"] = "radial_EW"
             else:
                 self.constructor_args.clear()
@@ -200,7 +229,6 @@ class OptiwindnetCollection(templates.CollectionTemplate):
 
         solver = solver_factory(solver_name)
 
-        model_options = self.modeling_options["collection"]["model_options"]
         # start from previous solution if available, else from heuristic if it fits
         if self.S_previous is not None:
             S_warm = self.S_previous
@@ -217,8 +245,8 @@ class OptiwindnetCollection(templates.CollectionTemplate):
             solver.set_problem(
                 P,
                 A,
-                max_turbines_per_string,
-                ModelOptions(**model_options),
+                capacity=max_turbines_per_string,
+                constraints=self.constraints,
                 warmstart=S_warm,
             )
         except OWNWarmupFailed:
@@ -226,8 +254,8 @@ class OptiwindnetCollection(templates.CollectionTemplate):
             solver.set_problem(
                 P,
                 A,
-                max_turbines_per_string,
-                ModelOptions(**model_options),
+                capacity=max_turbines_per_string,
+                constraints=self.constraints,
             )
 
         # do the branch-and-bound MILP search
