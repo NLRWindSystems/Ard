@@ -103,6 +103,7 @@ def ANN_DEL_factory(name_QoI, ANN_DEL_params):
         A function that predicts the selected DEL for one or more samples.
         Its input has ten features per sample; its output has shape (Q, 1).
     """
+
     def out_fun(x1):
         """Predict the selected DEL from ten features per sample.
 
@@ -135,7 +136,7 @@ def ANN_DEL_factory(name_QoI, ANN_DEL_params):
         # Z-score normalization parameters (fit on training data)
         mu_x = np.array(ANN_DEL_params[name_QoI]["zScore_norm"]["mu_x"])
         sigma_x = np.array(ANN_DEL_params[name_QoI]["zScore_norm"]["sigma_x"])
-        mu_t    = ANN_DEL_params[name_QoI]["zScore_norm"]["mu_t"]
+        mu_t = ANN_DEL_params[name_QoI]["zScore_norm"]["mu_t"]
         sigma_t = ANN_DEL_params[name_QoI]["zScore_norm"]["sigma_t"]
 
         # Network weights: Linear(10->60) + ReLU + Linear(60->1)
@@ -145,13 +146,14 @@ def ANN_DEL_factory(name_QoI, ANN_DEL_params):
         b2 = np.array(ANN_DEL_params[name_QoI]["weights"]["b2"])  # shape (1,)
 
         # Forward pass: z-score normalize -> Linear + ReLU -> Linear -> z-score denormalize
-        x_norm = (x1 - mu_x) / sigma_x          # (Q, 10)
+        x_norm = (x1 - mu_x) / sigma_x  # (Q, 10)
         a1 = np.maximum(0, x_norm @ W1.T + b1)  # (Q, 60)  ReLU
-        y_norm = a1 @ W2.T + b2                  # (Q, 1)
-        y = y_norm * sigma_t + mu_t              # (Q, 1)
+        y_norm = a1 @ W2.T + b2  # (Q, 1)
+        y = y_norm * sigma_t + mu_t  # (Q, 1)
 
         # remove negative entries
         y = np.maximum(0.0, y)
 
         return y
+
     return out_fun

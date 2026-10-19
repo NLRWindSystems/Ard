@@ -502,8 +502,18 @@ class FLORISSurrogateDELs(FLORISAEP):
     def get_raw_DELs(self):
         SATI = self.fmodel.get_turbine_sector_average_TI() * 100
         SAWS = self.fmodel.get_turbine_sector_average_wind_speed()
-        turbine_max_powers = np.array([np.max(t.power_thrust_table['power']) for t in self.fmodel.core.farm.turbine_map]) * 1000.0  # W
-        turbine_powers_percent = (self.fmodel.core.farm.power_setpoints / turbine_max_powers).flatten() * 100.0  # percent
+        turbine_max_powers = (
+            np.array(
+                [
+                    np.max(t.power_thrust_table["power"])
+                    for t in self.fmodel.core.farm.turbine_map
+                ]
+            )
+            * 1000.0
+        )  # W
+        turbine_powers_percent = (
+            self.fmodel.core.farm.power_setpoints / turbine_max_powers
+        ).flatten() * 100.0  # percent
 
         SATI_collapsed = SATI.reshape(-1, SATI.shape[-1])
         SAWS_collapsed = SAWS.reshape(-1, SAWS.shape[-1])
@@ -542,7 +552,9 @@ class FLORISSurrogateDELs(FLORISAEP):
         )
 
     def get_DELs(self):
-        del_bladeroot_ann, del_shaft_ann, del_towerbase_ann, del_yawbearings_ann = self.get_raw_DELs()
+        del_bladeroot_ann, del_shaft_ann, del_towerbase_ann, del_yawbearings_ann = (
+            self.get_raw_DELs()
+        )
 
         # Weight predictions by frequency of wind conditions
         weighted_del_bladeroot = np.zeros_like(del_towerbase_ann)
@@ -671,6 +683,7 @@ class FLORISCurtailment(FLORISSurrogateDELs):
         (`N_turbines`, `N_wind_conditions`) (inherited from
         `templates.FarmAEPTemplate`)
     """
+
     # TODO: Update doc strings to reflect curtailment options and outputs
 
     def initialize(self):
@@ -682,7 +695,8 @@ class FLORISCurtailment(FLORISSurrogateDELs):
 
         self.add_input(
             "turbine_power_pct_setpoints",
-            np.ones((self.N_wind_conditions, self.N_turbines)) * 100.0,  # default to no curtailment
+            np.ones((self.N_wind_conditions, self.N_turbines))
+            * 100.0,  # default to no curtailment
             units="percent",
             desc="power percent-of-rated setpoints to drive the turbines to for curtailment, with length `N_turbines`",
         )
@@ -706,10 +720,16 @@ class FLORISCurtailment(FLORISSurrogateDELs):
                 None,
             ),
         )
-        self.fmodel.core.wake.enable_turbine_turbulence_grid = True  # needed for the SATI/SAWS
+        self.fmodel.core.wake.enable_turbine_turbulence_grid = (
+            True  # needed for the SATI/SAWS
+        )
         if "peak_shaving_fraction" in self.modeling_options.get("floris", {}):
-            raise NotImplementedError("modeling options specifies `peak_shaving_fraction` but the curtailment module...")
-        if True:  # TODO: figure out how to enable through ard_system.yaml or otherwise to indicate that curtailment should be used
+            raise NotImplementedError(
+                "modeling options specifies `peak_shaving_fraction` but the curtailment module..."
+            )
+        if (
+            True
+        ):  # TODO: figure out how to enable through ard_system.yaml or otherwise to indicate that curtailment should be used
             # set high to make sure that power setpoints are set to full power by default; TODO: update from turbine info provided?
             rated_turbine_power = [
                 max(tdef["power_thrust_table"]["power"]) * 1.0e3  # put it in Watts
@@ -717,7 +737,11 @@ class FLORISCurtailment(FLORISSurrogateDELs):
             ]
 
             self.fmodel.set_operation_model("simple-derating")
-            self.fmodel.set(power_setpoints=inputs["turbine_power_pct_setpoints"]/100*rated_turbine_power)
+            self.fmodel.set(
+                power_setpoints=inputs["turbine_power_pct_setpoints"]
+                / 100
+                * rated_turbine_power
+            )
 
         self.fmodel.run()
 
