@@ -8,6 +8,7 @@ import floris.turbine_library.turbine_utilities
 
 import ard.utils.logging as ard_logging
 import ard.farm_aero.templates as templates
+import ard.farm_loads.surrogate_load_functions as ard_slf
 
 
 def create_FLORIS_turbine_from_windIO(
@@ -491,3 +492,249 @@ class FLORISAEP(templates.FarmAEPTemplate):
     @ard_logging.component_log_capture
     def setup_partials(self):
         FLORISFarmComponent.setup_partials(self)
+
+
+class FLORISSurrogateDELs(FLORISAEP):
+    """
+    Component class for computing surrogate DELs using FLORIS.
+    """
+
+    def get_raw_DELs(self):
+        SATI = self.fmodel.get_turbine_sector_average_TI() * 100
+        SAWS = self.fmodel.get_turbine_sector_average_wind_speed()
+        turbine_max_powers = np.array([np.max(t.power_thrust_table['power']) for t in self.fmodel.core.farm.turbine_map]) * 1000.0  # W
+        turbine_powers_percent = (self.fmodel.core.farm.power_setpoints / turbine_max_powers).flatten() * 100.0  # percent
+
+        SATI_collapsed = SATI.reshape(-1, SATI.shape[-1])
+        SAWS_collapsed = SAWS.reshape(-1, SAWS.shape[-1])
+
+        Yaw = self.fmodel.core.farm.yaw_angles.flatten()
+
+        # [SAWSup SAWSright SAWSdown SAWSleft SATIup SATIright SATIdown SATIleft Yaw PowerDemand[%]]
+        input_data = np.concatenate(
+            (
+                SAWS_collapsed,
+                SATI_collapsed,
+                Yaw[:, None],
+                turbine_powers_percent[:, None],
+            ),
+            axis=1,
+        )
+
+        # prepare ANN surrogates
+        ANN_DEL_params = self.modeling_options["surrogate_loads"]
+        ANN_DEL_BladeRoot = ard_slf.ANN_DEL_factory("BladeRoot", ANN_DEL_params)
+        ANN_DEL_Shaft = ard_slf.ANN_DEL_factory("Shaft", ANN_DEL_params)
+        ANN_DEL_TowerBase = ard_slf.ANN_DEL_factory("TowerBase", ANN_DEL_params)
+        ANN_DEL_YawBearings = ard_slf.ANN_DEL_factory("YawBearings", ANN_DEL_params)
+
+        # Make predictions using ANN surrogates
+        del_bladeroot_ann = ANN_DEL_BladeRoot(input_data)
+        del_shaft_ann = ANN_DEL_Shaft(input_data)
+        del_towerbase_ann = ANN_DEL_TowerBase(input_data)
+        del_yawbearings_ann = ANN_DEL_YawBearings(input_data)
+
+        return (
+            del_bladeroot_ann,
+            del_shaft_ann,
+            del_towerbase_ann,
+            del_yawbearings_ann,
+        )
+
+    def get_DELs(self):
+        del_bladeroot_ann, del_shaft_ann, del_towerbase_ann, del_yawbearings_ann = self.get_raw_DELs()
+
+        # Weight predictions by frequency of wind conditions
+        weighted_del_bladeroot = np.zeros_like(del_towerbase_ann)
+        weighted_del_shaft = np.zeros_like(del_towerbase_ann)
+        weighted_del_towerbase = np.zeros_like(del_towerbase_ann)
+        weighted_del_yawbearings = np.zeros_like(del_towerbase_ann)
+
+        n_turbs = self.N_turbines
+
+        for i, f in enumerate(self.wind_query.freq_table.flatten()):
+            weighted_del_bladeroot[i * n_turbs : i * n_turbs + n_turbs] = (
+                del_bladeroot_ann[i * n_turbs : i * n_turbs + n_turbs] * f
+            )
+            weighted_del_shaft[i * n_turbs : i * n_turbs + n_turbs] = (
+                del_shaft_ann[i * n_turbs : i * n_turbs + n_turbs] * f
+            )
+            weighted_del_towerbase[i * n_turbs : i * n_turbs + n_turbs] = (
+                del_towerbase_ann[i * n_turbs : i * n_turbs + n_turbs] * f
+            )
+            weighted_del_yawbearings[i * n_turbs : i * n_turbs + n_turbs] = (
+                del_yawbearings_ann[i * n_turbs : i * n_turbs + n_turbs] * f
+            )
+
+        return (
+            weighted_del_bladeroot,
+            weighted_del_shaft,
+            weighted_del_towerbase,
+            weighted_del_yawbearings,
+        )
+
+    def initialize(self):
+        super().initialize()  # run super class script first!
+
+    def setup(self):
+        super().setup()  # run super class script first!
+
+        self.add_output(
+            "blade_root_DEL",
+            0.0,
+            units="kN*m",
+            desc="frequency weighted sum of blade root DEL across all wind conditions",
+        )
+        self.add_output(
+            "shaft_DEL",
+            0.0,
+            units="kN*m",
+            desc="frequency weighted sum of shaft DEL across all wind conditions",
+        )
+        self.add_output(
+            "tower_base_DEL",
+            0.0,
+            units="kN*m",
+            desc="frequency weighted sum of tower base DEL across all wind conditions",
+        )
+        self.add_output(
+            "yaw_bearings_DEL",
+            0.0,
+            units="kN*m",
+            desc="frequency weighted sum of yaw bearings DELs across all wind conditions",
+        )
+
+    def setup_partials(self):
+        super().setup_partials()
+
+    def compute(self, inputs, outputs):
+        super().compute(inputs, outputs)
+        tDEL_outputs = self.get_DELs()
+        DEL_outputs = [np.sum(v) for v in tDEL_outputs]
+        outputs["blade_root_DEL"] = DEL_outputs[0]
+        outputs["shaft_DEL"] = DEL_outputs[1]
+        outputs["tower_base_DEL"] = DEL_outputs[2]
+        outputs["yaw_bearings_DEL"] = DEL_outputs[3]
+        outputs["AEP_farm"] = FLORISFarmComponent.get_AEP_farm(self)
+
+
+class FLORISCurtailment(FLORISSurrogateDELs):
+    """
+    Component class for computing an AEP analysis using FLORIS.
+
+    A component class that evaluates a series of farm power and associated
+    quantities using FLORIS with a wind rose to make an AEP estimate. Inherits
+    the interface from `templates.FarmAEPTemplate` and the computational guts
+    from `FLORISFarmComponent`.
+
+    Options
+    -------
+    case_title : str
+        a "title" for the case, used to disambiguate runs in practice (inherited
+        from `FLORISFarmComponent`)
+    modeling_options : dict
+        a modeling options dictionary (inherited via
+        `templates.FarmAEPTemplate`)
+    wind_query : floris.wind_data.WindRose
+        a WindQuery objects that specifies the wind conditions that are to be
+        computed (inherited from `templates.FarmAEPTemplate`)
+
+    Inputs
+    ------
+    x_turbines : np.ndarray
+        a 1D numpy array indicating the x-dimension locations of the turbines,
+        with length `N_turbines` (inherited via `templates.FarmAEPTemplate`)
+    y_turbines : np.ndarray
+        a 1D numpy array indicating the y-dimension locations of the turbines,
+        with length `N_turbines` (inherited via `templates.FarmAEPTemplate`)
+    yaw_turbines : np.ndarray
+        a numpy array indicating the yaw angle to drive each turbine to with
+        respect to the ambient wind direction, with length `N_turbines`
+        (inherited via `templates.FarmAEPTemplate`)
+
+    Outputs
+    -------
+    AEP_farm : float
+        the AEP of the farm given by the analysis (inherited from
+        `templates.FarmAEPTemplate`)
+    power_farm : np.ndarray
+        an array of the farm power for each of the wind conditions that have
+        been queried (inherited from `templates.FarmAEPTemplate`)
+    power_turbines : np.ndarray
+        an array of the farm power for each of the turbines in the farm across
+        all of the conditions that have been queried on the wind rose
+        (`N_turbines`, `N_wind_conditions`) (inherited from
+        `templates.FarmAEPTemplate`)
+    thrust_turbines : np.ndarray
+        an array of the wind turbine thrust for each of the turbines in the farm
+        across all of the conditions that have been queried on the wind rose
+        (`N_turbines`, `N_wind_conditions`) (inherited from
+        `templates.FarmAEPTemplate`)
+    """
+    # TODO: Update doc strings to reflect curtailment options and outputs
+
+    def initialize(self):
+        super().initialize()  # run super class script first!
+
+    @ard_logging.component_log_capture
+    def setup(self):
+        super().setup()  # run super class script first!
+
+        self.add_input(
+            "turbine_power_pct_setpoints",
+            np.ones((self.N_wind_conditions, self.N_turbines)) * 100.0,  # default to no curtailment
+            units="percent",
+            desc="power percent-of-rated setpoints to drive the turbines to for curtailment, with length `N_turbines`",
+        )
+
+    @ard_logging.component_log_capture
+    def setup_partials(self):
+        super().setup_partials()
+
+    @ard_logging.component_log_capture
+    def compute(self, inputs, outputs):
+
+        # set up and run the floris model
+        self.fmodel.set(
+            layout_x=inputs["x_turbines"],
+            layout_y=inputs["y_turbines"],
+            wind_data=self.wind_query,
+            yaw_angles=np.array([inputs["yaw_turbines"]]),
+            reference_wind_height=getattr(
+                self.wind_query,
+                "reference_height",
+                None,
+            ),
+        )
+        self.fmodel.core.wake.enable_turbine_turbulence_grid = True  # needed for the SATI/SAWS
+        if "peak_shaving_fraction" in self.modeling_options.get("floris", {}):
+            raise NotImplementedError("modeling options specifies `peak_shaving_fraction` but the curtailment module...")
+        if True:  # TODO: figure out how to enable through ard_system.yaml or otherwise to indicate that curtailment should be used
+            # set high to make sure that power setpoints are set to full power by default; TODO: update from turbine info provided?
+            rated_turbine_power = [
+                max(tdef["power_thrust_table"]["power"]) * 1.0e3  # put it in Watts
+                for tdef in self.fmodel.core.farm.turbine_definitions
+            ]
+
+            self.fmodel.set_operation_model("simple-derating")
+            self.fmodel.set(power_setpoints=inputs["turbine_power_pct_setpoints"]/100*rated_turbine_power)
+
+        self.fmodel.run()
+
+        self.rDEL_outputs = self.get_raw_DELs()
+        tDEL_outputs = self.tDEL_outputs = self.get_DELs()
+        DEL_outputs = [np.sum(v) for v in tDEL_outputs]
+
+        # dump the yaml to re-run this case on demand
+        FLORISFarmComponent.dump_floris_yamlfile(self, self.dir_floris)
+
+        # FLORIS computes the powers
+        outputs["AEP_farm"] = FLORISFarmComponent.get_AEP_farm(self)
+        outputs["power_farm"] = FLORISFarmComponent.get_power_farm(self)
+        outputs["power_turbines"] = FLORISFarmComponent.get_power_turbines(self)
+        outputs["thrust_turbines"] = FLORISFarmComponent.get_thrust_turbines(self)
+
+        outputs["blade_root_DEL"] = DEL_outputs[0]
+        outputs["shaft_DEL"] = DEL_outputs[1]
+        outputs["tower_base_DEL"] = DEL_outputs[2]
+        outputs["yaw_bearings_DEL"] = DEL_outputs[3]
