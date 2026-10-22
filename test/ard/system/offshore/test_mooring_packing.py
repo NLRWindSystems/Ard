@@ -8,6 +8,9 @@ from openmdao.utils.assert_utils import assert_check_totals
 import pytest
 
 import ard
+import ard.collection
+import ard.offshore.mooring_constraint
+import ard.offshore.mooring_design_constant_depth
 import ard.utils.io
 import ard.layout.gridfarm
 
