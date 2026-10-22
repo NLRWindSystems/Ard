@@ -511,8 +511,12 @@ class FLORISSurrogateDELs(FLORISAEP):
             )
             * 1000.0
         )  # W
+        power_setpoints = self.fmodel.core.farm.power_setpoints
+        power_setpoints = np.where(
+            np.isposinf(power_setpoints), turbine_max_powers, power_setpoints
+        )
         turbine_powers_percent = (
-            self.fmodel.core.farm.power_setpoints / turbine_max_powers
+            power_setpoints / turbine_max_powers
         ).flatten() * 100.0  # percent
 
         SATI_collapsed = SATI.reshape(-1, SATI.shape[-1])

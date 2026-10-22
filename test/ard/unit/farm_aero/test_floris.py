@@ -65,6 +65,34 @@ class TestFLORISSurrogateDELs:
             np.testing.assert_allclose(predictor.call_args.args[0], expected)
             np.testing.assert_array_equal(actual, prediction)
 
+    def test_unlimited_setpoints_are_full_demand(self, monkeypatch):
+        """Translate FLORIS unlimited setpoints to 100% surrogate demand."""
+        self.FLORIS.fmodel.get_turbine_sector_average_wind_speed.return_value = (
+            np.zeros((1, 1, 4))
+        )
+        self.FLORIS.fmodel.get_turbine_sector_average_TI.return_value = np.zeros(
+            (1, 1, 4)
+        )
+        self.FLORIS.fmodel.core.farm = SimpleNamespace(
+            turbine_map=[
+                SimpleNamespace(power_thrust_table={"power": [0.0, 2000.0]})
+            ],
+            power_setpoints=np.array([[np.inf]]),
+            yaw_angles=np.array([[0.0]]),
+        )
+        self.FLORIS.modeling_options = {"surrogate_loads": {}}
+        predictor = Mock(return_value=np.zeros((1, 1)))
+        monkeypatch.setattr(
+            farmaero_floris.ard_slf, "ANN_DEL_factory", Mock(return_value=predictor)
+        )
+
+        self.FLORIS.get_raw_DELs()
+
+        np.testing.assert_array_equal(
+            predictor.call_args.args[0][:, -1],
+            [100.0],
+        )
+
     def test_frequency_weighting(self):
         """Weight each condition's turbine block without changing raw predictions."""
         self.FLORIS.N_turbines = 2
