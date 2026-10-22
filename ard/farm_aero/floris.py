@@ -568,7 +568,10 @@ class FLORISSurrogateDELs(FLORISAEP):
 
         n_turbs = self.N_turbines
 
-        for i, f in enumerate(self.wind_query.freq_table.flatten()):
+        frequencies = self.wind_query.freq_table.flatten()[
+            self.wind_query.non_zero_freq_mask.flatten()
+        ]
+        for i, f in enumerate(frequencies):
             weighted_del_bladeroot[i * n_turbs : i * n_turbs + n_turbs] = (
                 del_bladeroot_ann[i * n_turbs : i * n_turbs + n_turbs] * f
             )
@@ -743,7 +746,9 @@ class FLORISCurtailment(FLORISSurrogateDELs):
 
             self.fmodel.set_operation_model("simple-derating")
             self.fmodel.set(
-                power_setpoints=inputs["turbine_power_pct_setpoints"]
+                power_setpoints=inputs["turbine_power_pct_setpoints"][
+                    self.wind_query.non_zero_freq_mask.flatten()
+                ]
                 / 100
                 * rated_turbine_power
             )

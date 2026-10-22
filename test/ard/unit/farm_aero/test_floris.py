@@ -95,9 +95,12 @@ class TestFLORISSurrogateDELs:
         """Weight each condition's turbine block without changing raw predictions."""
         self.FLORIS.N_turbines = 2
         self.FLORIS.wind_query = SimpleNamespace(
-            freq_table=np.array([[0.1, 0.0], [0.3, 0.6]])
+            freq_table=np.array([[0.1, 0.0], [0.3, 0.6]]),
+            non_zero_freq_mask=np.array([[True, False], [True, True]]),
         )
-        raw = tuple(np.arange(1.0, 9.0).reshape(-1, 1) * scale for scale in range(1, 5))
+        raw = tuple(
+            np.arange(1.0, 7.0).reshape(-1, 1) * scale for scale in range(1, 5)
+        )
         originals = tuple(value.copy() for value in raw)
         self.FLORIS.get_raw_DELs = Mock(return_value=raw)
 
@@ -107,7 +110,7 @@ class TestFLORISSurrogateDELs:
         for actual, original, unchanged in zip(weighted, originals, raw):
             np.testing.assert_allclose(
                 actual,
-                original * np.array([0.1, 0.1, 0, 0, 0.3, 0.3, 0.6, 0.6])[:, None],
+                original * np.array([0.1, 0.1, 0.3, 0.3, 0.6, 0.6])[:, None],
             )
             np.testing.assert_array_equal(unchanged, original)
 
@@ -284,6 +287,38 @@ class TestFLORISCurtailment:
             np.sum(powers.sum(axis=0) * frequencies.flatten()) * 8760.0,
         )
         assert (self.FLORIS.dir_floris / "batch.yaml").is_file()
+
+    def test_compute_with_zero_probability_bin(self):
+        """Exclude zero-probability conditions from FLORIS setpoints and DELs."""
+        original_wind_query = self.FLORIS.wind_query
+        self.FLORIS.wind_query = floris.WindRose(
+            wind_directions=original_wind_query.wind_directions,
+            wind_speeds=original_wind_query.wind_speeds,
+            freq_table=np.array([[0.0, 0.75]]),
+            ti_table=original_wind_query.ti_table,
+        )
+        self.FLORIS.wind_query.reference_height = original_wind_query.reference_height
+        setpoints = np.array([[50.0, 75.0], [25.0, 100.0]])
+        self.prob.set_val("curtailment.turbine_power_pct_setpoints", setpoints)
+
+        self.prob.run_model()
+
+        rated_power = (
+            max(
+                self.FLORIS.fmodel.core.farm.turbine_definitions[0][
+                    "power_thrust_table"
+                ]["power"]
+            )
+            * 1000.0
+        )
+        np.testing.assert_allclose(
+            self.FLORIS.fmodel.core.farm.power_setpoints,
+            setpoints[1:] / 100.0 * rated_power,
+        )
+        assert self.FLORIS.rDEL_outputs[0].shape == (2, 1)
+        np.testing.assert_allclose(
+            self.FLORIS.tDEL_outputs[0], self.FLORIS.rDEL_outputs[0]
+        )
 
     def test_rejects_peak_shaving(self):
         """Reject the incompatible peak-shaving option before running FLORIS."""
