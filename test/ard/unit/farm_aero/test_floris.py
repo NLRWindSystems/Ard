@@ -74,9 +74,7 @@ class TestFLORISSurrogateDELs:
             (1, 1, 4)
         )
         self.FLORIS.fmodel.core.farm = SimpleNamespace(
-            turbine_map=[
-                SimpleNamespace(power_thrust_table={"power": [0.0, 2000.0]})
-            ],
+            turbine_map=[SimpleNamespace(power_thrust_table={"power": [0.0, 2000.0]})],
             power_setpoints=np.array([[np.inf]]),
             yaw_angles=np.array([[0.0]]),
         )
