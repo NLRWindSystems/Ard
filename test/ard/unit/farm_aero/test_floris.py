@@ -98,9 +98,7 @@ class TestFLORISSurrogateDELs:
             freq_table=np.array([[0.1, 0.0], [0.3, 0.6]]),
             non_zero_freq_mask=np.array([[True, False], [True, True]]),
         )
-        raw = tuple(
-            np.arange(1.0, 7.0).reshape(-1, 1) * scale for scale in range(1, 5)
-        )
+        raw = tuple(np.arange(1.0, 7.0).reshape(-1, 1) * scale for scale in range(1, 5))
         originals = tuple(value.copy() for value in raw)
         self.FLORIS.get_raw_DELs = Mock(return_value=raw)
 
