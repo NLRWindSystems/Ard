@@ -1,4 +1,6 @@
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import Mock
 
 import yaml
 
@@ -11,6 +13,257 @@ import ard.utils.io
 import ard.utils.test_utils
 import ard.wind_query as wq
 import ard.farm_aero.floris as farmaero_floris
+
+
+class TestFLORISSurrogateDELs:
+
+    def setup_method(self):
+        self.FLORIS = farmaero_floris.FLORISSurrogateDELs()
+        self.FLORIS.fmodel = Mock()
+
+    def test_feature_order(self, monkeypatch):
+        """Preserve condition/turbine order and convert TI and power to percent."""
+        speeds = np.arange(16.0).reshape(2, 2, 4)
+        intensities = (np.arange(16.0).reshape(2, 2, 4) + 1) / 100.0
+        self.FLORIS.fmodel.get_turbine_sector_average_wind_speed.return_value = speeds
+        self.FLORIS.fmodel.get_turbine_sector_average_TI.return_value = intensities
+        self.FLORIS.fmodel.core.farm = SimpleNamespace(
+            turbine_map=[
+                SimpleNamespace(power_thrust_table={"power": [0.0, 2000.0]}),
+                SimpleNamespace(power_thrust_table={"power": [0.0, 4000.0]}),
+            ],
+            power_setpoints=np.array([[2e6, 2e6], [0.5e6, 3e6]]),
+            yaw_angles=np.array([[1.0, -2.0], [3.0, -4.0]]),
+        )
+        params = {"test": "parameters"}
+        self.FLORIS.modeling_options = {"surrogate_loads": params}
+        predictions = [np.full((4, 1), value) for value in range(1, 5)]
+        predictors = [Mock(return_value=value) for value in predictions]
+        factory = Mock(side_effect=predictors)
+        monkeypatch.setattr(farmaero_floris.ard_slf, "ANN_DEL_factory", factory)
+
+        result = self.FLORIS.get_raw_DELs()
+
+        assert [call.args[0] for call in factory.call_args_list] == [
+            "BladeRoot",
+            "Shaft",
+            "TowerBase",
+            "YawBearings",
+        ]
+        for call in factory.call_args_list:
+            assert call.args[1] is params
+        expected = np.array(
+            [
+                [0, 1, 2, 3, 1, 2, 3, 4, 1, 100],
+                [4, 5, 6, 7, 5, 6, 7, 8, -2, 50],
+                [8, 9, 10, 11, 9, 10, 11, 12, 3, 25],
+                [12, 13, 14, 15, 13, 14, 15, 16, -4, 75],
+            ]
+        )
+        for predictor, actual, prediction in zip(predictors, result, predictions):
+            predictor.assert_called_once()
+            np.testing.assert_allclose(predictor.call_args.args[0], expected)
+            np.testing.assert_array_equal(actual, prediction)
+
+    def test_frequency_weighting(self):
+        """Weight each condition's turbine block without changing raw predictions."""
+        self.FLORIS.N_turbines = 2
+        self.FLORIS.wind_query = SimpleNamespace(
+            freq_table=np.array([[0.1, 0.0], [0.3, 0.6]])
+        )
+        raw = tuple(np.arange(1.0, 9.0).reshape(-1, 1) * scale for scale in range(1, 5))
+        originals = tuple(value.copy() for value in raw)
+        self.FLORIS.get_raw_DELs = Mock(return_value=raw)
+
+        weighted = self.FLORIS.get_DELs()
+
+        self.FLORIS.get_raw_DELs.assert_called_once_with()
+        for actual, original, unchanged in zip(weighted, originals, raw):
+            np.testing.assert_allclose(
+                actual,
+                original * np.array([0.1, 0.1, 0, 0, 0.3, 0.3, 0.6, 0.6])[:, None],
+            )
+            np.testing.assert_array_equal(unchanged, original)
+
+    def test_compute(self, monkeypatch):
+        """Publish all four summed DEL outputs after the parent aero computation."""
+        parent_compute = Mock()
+        monkeypatch.setattr(farmaero_floris.FLORISAEP, "compute", parent_compute)
+        self.FLORIS.fmodel.get_farm_AEP.return_value = 1234.0
+        self.FLORIS.get_DELs = Mock(
+            return_value=tuple(
+                np.array([[1.0], [2.0]]) * scale for scale in range(1, 5)
+            )
+        )
+        inputs, outputs = {}, {}
+
+        self.FLORIS.compute(inputs, outputs)
+
+        parent_compute.assert_called_once_with(inputs, outputs)
+        assert outputs == {
+            "blade_root_DEL": 3.0,
+            "shaft_DEL": 6.0,
+            "tower_base_DEL": 9.0,
+            "yaw_bearings_DEL": 12.0,
+            "AEP_farm": 1234.0,
+        }
+
+
+class TestFLORISCurtailment:
+
+    @pytest.fixture(autouse=True)
+    def setup_problem(self, tmp_path, monkeypatch):
+        """Set up a tiny farm with DEL models that return scaled power demand."""
+        monkeypatch.chdir(tmp_path)
+        first_weights = np.zeros((60, 10))
+        first_weights[0, 9] = 1.0
+        second_weights = np.zeros((1, 60))
+        second_weights[0, 0] = 1.0
+        names = ["BladeRoot", "Shaft", "TowerBase", "YawBearings"]
+        params = {
+            name: {
+                "zScore_norm": {
+                    "mu_x": np.zeros(10),
+                    "sigma_x": np.ones(10),
+                    "mu_t": 0.0,
+                    "sigma_t": float(index),
+                },
+                "weights": {
+                    "W1": first_weights,
+                    "b1": np.zeros(60),
+                    "W2": second_weights,
+                    "b2": 0.0,
+                },
+            }
+            for index, name in enumerate(names, start=1)
+        }
+        turbine_path = (
+            Path(ard.__file__).parents[1]
+            / "examples/data/windIO-plant_turbine_IEA-3.4MW-130m-RWT.yaml"
+        )
+        with open(turbine_path) as turbine_file:
+            turbine = yaml.safe_load(turbine_file)
+        self.modeling_options = {
+            "windIO_plant": {
+                "wind_farm": {"name": "unit test farm", "turbine": turbine},
+                "site": {
+                    "energy_resource": {
+                        "wind_resource": {
+                            "wind_direction": [270.0],
+                            "wind_speed": [8.0, 12.0],
+                            "probability": {"data": [[0.25, 0.75]]},
+                            "turbulence_intensity": {"data": [[0.06, 0.08]]},
+                            "reference_height": turbine["hub_height"],
+                        }
+                    }
+                },
+            },
+            "layout": {"N_turbines": 2},
+            "aero": {"return_turbine_output": True},
+            "surrogate_loads": params,
+        }
+        self.prob = om.Problem(reports=False)
+        self.FLORIS = self.prob.model.add_subsystem(
+            "curtailment",
+            farmaero_floris.FLORISCurtailment(
+                modeling_options=self.modeling_options,
+                case_title="unit test",
+                data_path="",
+            ),
+        )
+        self.prob.setup()
+        self.prob.final_setup()
+        self.prob.set_val("curtailment.x_turbines", [0.0, 1000.0])
+        self.prob.set_val("curtailment.y_turbines", [0.0, 0.0])
+        yield
+        self.prob.cleanup()
+
+    def test_setup(self):
+        """Declare percent setpoints per condition and turbine and scalar DELs."""
+        np.testing.assert_array_equal(
+            self.prob.get_val(
+                "curtailment.turbine_power_pct_setpoints", units="percent"
+            ),
+            np.full((2, 2), 100.0),
+        )
+        for name in [
+            "blade_root_DEL",
+            "shaft_DEL",
+            "tower_base_DEL",
+            "yaw_bearings_DEL",
+        ]:
+            np.testing.assert_array_equal(
+                self.prob.get_val(f"curtailment.{name}", units="kN*m"), [0.0]
+            )
+        assert self.FLORIS.N_wind_conditions == 2
+
+    @pytest.mark.parametrize(
+        "setpoints",
+        [
+            np.full((2, 2), 100.0),
+            np.array([[50.0, 75.0], [25.0, 100.0]]),
+        ],
+    )
+    def test_compute(self, setpoints):
+        """Run FLORIS and the ANNs with known setpoints and weighted DEL totals."""
+        self.prob.set_val("curtailment.turbine_power_pct_setpoints", setpoints)
+
+        self.prob.run_model()
+
+        rated_power = (
+            max(
+                self.FLORIS.fmodel.core.farm.turbine_definitions[0][
+                    "power_thrust_table"
+                ]["power"]
+            )
+            * 1000.0
+        )
+        np.testing.assert_allclose(
+            self.FLORIS.fmodel.core.farm.power_setpoints,
+            setpoints / 100.0 * rated_power,
+        )
+        assert self.FLORIS.fmodel.core.wake.enable_turbine_turbulence_grid
+        assert self.FLORIS.fmodel.get_operation_model() == "simple-derating"
+        frequencies = np.array([[0.25], [0.75]])
+        for scale, name in enumerate(
+            [
+                "blade_root_DEL",
+                "shaft_DEL",
+                "tower_base_DEL",
+                "yaw_bearings_DEL",
+            ],
+            start=1,
+        ):
+            np.testing.assert_allclose(
+                self.FLORIS.rDEL_outputs[scale - 1],
+                (setpoints * scale).reshape(-1, 1),
+            )
+            np.testing.assert_allclose(
+                self.FLORIS.tDEL_outputs[scale - 1],
+                (setpoints * frequencies * scale).reshape(-1, 1),
+            )
+            np.testing.assert_allclose(
+                self.prob.get_val(f"curtailment.{name}"),
+                np.sum(setpoints * frequencies) * scale,
+            )
+        powers = self.prob.get_val("curtailment.power_turbines")
+        assert powers.shape == (2, 2)
+        assert np.all(powers >= 0.0)
+        assert np.all(powers <= (setpoints / 100.0 * rated_power).T + 1e-6)
+        np.testing.assert_allclose(
+            self.prob.get_val("curtailment.power_farm"), powers.sum(axis=0)
+        )
+        np.testing.assert_allclose(
+            self.prob.get_val("curtailment.AEP_farm"),
+            np.sum(powers.sum(axis=0) * frequencies.flatten()) * 8760.0,
+        )
+        assert (self.FLORIS.dir_floris / "batch.yaml").is_file()
+
+    def test_rejects_peak_shaving(self):
+        """Reject the incompatible peak-shaving option before running FLORIS."""
+        self.modeling_options["floris"] = {"peak_shaving_fraction": 0.4}
+        with pytest.raises(NotImplementedError, match="peak_shaving_fraction"):
+            self.prob.run_model()
 
 
 class TestFLORISFarmComponent:
