@@ -7,6 +7,7 @@ four sector-average turbulence intensities, yaw angle, and power demand.
 """
 
 import numpy as np
+import warnings
 
 
 def tansig(x):
@@ -103,6 +104,12 @@ def ANN_DEL_factory(name_QoI, ANN_DEL_params):
         A function that predicts the selected DEL for one or more samples.
         Its input has ten features per sample; its output has shape (Q, 1).
     """
+
+    warnings.warn(
+        f"""Generating surrogate load function `{name_QoI}` using `ANN_DEL_factory`.
+        This is an experimental feature that requires a fixed model architecture.
+        Ensure its behavior is acceptable for your use case."""
+    )
 
     def out_fun(x1):
         """Predict the selected DEL from ten features per sample.
