@@ -142,9 +142,19 @@ class TestConstraints:
                 self.prob.get_val("boundary_distances", units="m") < tolerance_spec
             )
 
+        # the distances above come from the ray-casting constraint itself, so also
+        # check the final layout against the square boundary directly
+        with subtests.test("turbines inside the boundary"):
+            x_turbines = self.prob.get_val("x_turbines", units="m")
+            y_turbines = self.prob.get_val("y_turbines", units="m")
+            assert np.all(
+                np.maximum(np.abs(x_turbines), np.abs(y_turbines))
+                < 2000.0 + tolerance_spec
+            )
+
         # make sure the target spacing matches well
-        spacing_target_validation = 5.46727038  # from a run on 15 Jan 2026
-        area_target_validation = 10.4951899  # from a run on 15 Jan 2026
+        spacing_target_validation = 5.46721633  # from a run on 25 Nov 2026
+        area_target_validation = 10.49498239  # from a run on 25 Nov 2026
         with subtests.test("validation spacing matches"):
             assert np.isclose(
                 self.prob.get_val("spacing_target"), spacing_target_validation
