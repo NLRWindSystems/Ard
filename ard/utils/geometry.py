@@ -151,31 +151,27 @@ def process_edge(
     Determines if a vertical ray cast from the point up intersects
     the edge, and calculates the distance from the point to the edge segment.
 
+    Each edge covers the half-open x-interval [min(x_start, x_end), max(x_start, x_end)).
+    A vertex at the point's x-coordinate is then counted once where the boundary passes
+    through it and zero or two times where the boundary only touches it, so the parity
+    of the crossings needs no further correction. A vertical edge covers no interval and
+    is never counted; the edges joined to it count the crossing instead.
+
     Args:
         edge_start (jnp.ndarray): Start vertex of the edge ([x, y]).
         edge_end (jnp.ndarray): End vertex of the edge ([x, y]).
         point (jnp.ndarray): Point of interest ([x, y]).
-        shift (float): Small value added to avoid division by zero when edge is vertical.
+        shift (float): Small value added to the denominator so that vertical edges,
+            which are never counted, do not divide by zero.
 
     Returns:
         tuple: A tuple containing:
-            - is_below (bool): True if point is below the edge at the ray intersection.
+            - is_below (bool): True if the ray crosses the edge above the point.
             - distance (float): Shortest distance from point to the edge segment.
-            - vertex_crossing (int): 1 if ray crosses exactly at edge_start vertex, 0 otherwise.
     """
 
-    # Check if the x-coordinate of the point is between the x-coordinates of the edge,
-    # including when the point is directly below a vertical edge
-    x_condition = (
-        ((edge_start[0] <= point[0]) & (point[0] < edge_end[0]))
-        | ((edge_start[0] >= point[0]) & (point[0] > edge_end[0]))
-        | (
-            (
-                jnp.isclose(edge_start[0], edge_end[0])
-                & jnp.isclose(point[0], edge_start[0])
-            )
-        )
-    )
+    # Check if the x-coordinate of the point is in the half-open x-interval of the edge
+    x_condition = (edge_start[0] <= point[0]) != (edge_end[0] <= point[0])
 
     # Calculate the y-coordinate of the edge at the x-coordinate of the point
     y = ((edge_end[1] - edge_start[1]) / (edge_end[0] - edge_start[0] + shift)) * (
@@ -185,15 +181,10 @@ def process_edge(
     # Determine if the point is below the edge
     is_below = x_condition & (point[1] < y)
 
-    # record vertex crossings
-    vertex_crossing = jnp.where(
-        x_condition & (edge_start[0] == point[0]) & is_below, 1, 0
-    )
-
     # Calculate the distance to the edge
     distance = distance_point_to_lineseg_nd(point, edge_start, edge_end)
 
-    return is_below, distance, vertex_crossing
+    return is_below, distance
 
 
 # Vectorize the edge processing function
@@ -239,23 +230,10 @@ def distance_point_to_polygon_ray_casting(
 
     edge_starts = vertices[:-1]
     edge_ends = vertices[1:]
-    is_below, distances, vertex_crossings = process_edge_vec(
-        edge_starts, edge_ends, point, shift
-    )
+    is_below, distances = process_edge_vec(edge_starts, edge_ends, point, shift)
 
-    # Check for tangential vertex crossings
-    # Create arrays of current and previous edge differences
-    curr_edge_end_diff = edge_ends[:, 0] - point[0]
-    prev_edge_start_diff = (
-        jnp.roll(edge_starts[:, 0], 1) - point[0]
-    )  # Shift by 1 to get previous
-    # Tangential crossing occurs when vertex_crossing > 0 AND the other two connected vertices are on same side
-    tangential_vertex_crossings = jnp.where(
-        (vertex_crossings > 0) & (curr_edge_end_diff * prev_edge_start_diff > 0), 1, 0
-    )
-
-    # Count the number of intersections, ignoring tangential vertex crossings
-    intersection_counter = jnp.sum(is_below) - jnp.sum(tangential_vertex_crossings)
+    # Count the number of intersections
+    intersection_counter = jnp.sum(is_below)
 
     # Compute the signed distance if desired
     if return_distance:
