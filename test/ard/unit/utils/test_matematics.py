@@ -131,7 +131,9 @@ class TestSmoothNorm:
         test_result = self.smooth_norm_grad(vec)
 
         # loose tolerance due to expected error in the grad of smooth_norm for small vector values
-        assert np.all(test_result[0] == pytest.approx(self.norm_grad(vec)[0], abs=1e-1))
+        # pytest>=9.2 reads the expected value through `.flat`, which JAX arrays lack
+        expected_result = np.asarray(self.norm_grad(vec)[0])
+        assert np.all(test_result[0] == pytest.approx(expected_result, abs=1e-1))
 
     def test_smooth_norm_zero_values_grad(self):
 
