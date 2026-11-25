@@ -224,13 +224,15 @@ class TestDistancePointToPolygonRayCasting:
 
         polygon = np.array([[0.0, 0.2], [0.8, 1.0], [0.0, 1.0]])
         point = np.array([0.8, 0.8])
-        expected_below = [False, False, True]
+        # the ray only touches the vertex at x = 0.8, and both edges joined there lie
+        # to its left, so neither edge counts it
+        expected_below = [False, False, False]
 
         for idx_end_point, end_point in enumerate(polygon):
 
             with subtests.test(f"end point {idx_end_point}"):
                 start_point = polygon[idx_end_point - 1]
-                is_below, distance, vertex_crossing = geo_utils.process_edge(
+                is_below, distance = geo_utils.process_edge(
                     edge_start=start_point, edge_end=end_point, point=point, shift=1e-10
                 )
                 assert is_below == expected_below[idx_end_point]
@@ -245,49 +247,137 @@ class TestDistancePointToPolygonRayCasting:
 
             with subtests.test(f"end point {idx_end_point}"):
                 start_point = polygon[idx_end_point - 1]
-                is_below, distance, vertex_crossing = geo_utils.process_edge(
+                is_below, distance = geo_utils.process_edge(
                     edge_start=start_point, edge_end=end_point, point=point, shift=1e-10
                 )
                 assert is_below == expected_below[idx_end_point]
 
-        for idx_end_point, end_point in enumerate(polygon):
-
-            with subtests.test(f"end point {idx_end_point}"):
-                start_point = polygon[idx_end_point - 1]
-                is_below, distance, vertex_crossing = geo_utils.process_edge(
-                    edge_start=start_point, edge_end=end_point, point=point, shift=1e-10
-                )
-                assert vertex_crossing == 0.0
-
     def test_process_edge_single(self, subtests):
 
         line = np.array([[0.8, 1.0], [0.0, 1.0]])
-        point = np.array([0.8, 0.8])
 
-        is_below, distance, vertex_crossing = geo_utils.process_edge(
-            edge_start=line[0], edge_end=line[1], point=point, shift=1e-10
-        )
-        with subtests.test(f"test below edge"):
-            assert is_below == True
-        with subtests.test(f"test vertex crossing"):
-            assert vertex_crossing == True
-        with subtests.test(f"test distance"):
-            assert distance == pytest.approx(0.2, rel=1e-7)
+        # the edge covers 0.0 <= x < 0.8 in either direction
+        for idx_line, (edge_start, edge_end) in enumerate([line, line[::-1]]):
+            for point, expected_below in [
+                (np.array([0.0, 0.8]), True),
+                (np.array([0.4, 0.8]), True),
+                (np.array([0.8, 0.8]), False),
+            ]:
+
+                is_below, distance = geo_utils.process_edge(
+                    edge_start=edge_start, edge_end=edge_end, point=point, shift=1e-10
+                )
+                with subtests.test(f"test below edge {idx_line} at x={point[0]}"):
+                    assert is_below == expected_below
+                with subtests.test(f"test distance {idx_line} at x={point[0]}"):
+                    assert distance == pytest.approx(0.2, rel=1e-6)
 
     def test_process_edge_single_colinear(self, subtests):
 
         line = np.array([[0.8, 1.0], [0.0, 1.0]])
         point = np.array([0.4, 1.0])
 
-        is_below, distance, vertex_crossing = geo_utils.process_edge(
+        is_below, distance = geo_utils.process_edge(
             edge_start=line[0], edge_end=line[1], point=point, shift=1e-10
         )
         with subtests.test(f"test below edge"):
             assert is_below == False
-        with subtests.test(f"test vertex crossing"):
-            assert vertex_crossing == 0
         with subtests.test(f"test distance"):
             assert distance == pytest.approx(0.0, rel=1e-7)
+
+    def test_process_edge_vertical(self, subtests):
+
+        # a vertical edge is never counted, the edges joined to it count the crossing
+        for edge_start, edge_end in [
+            ([5.0, 8.0], [5.0, 12.0]),
+            ([5.0, 12.0], [5.0, 8.0]),
+        ]:
+
+            is_below, distance = geo_utils.process_edge(
+                edge_start=np.array(edge_start),
+                edge_end=np.array(edge_end),
+                point=np.array([5.0, 4.0]),
+                shift=1e-10,
+            )
+            with subtests.test(f"test below edge {edge_start[1]} to {edge_end[1]}"):
+                assert is_below == False
+            with subtests.test(f"test distance {edge_start[1]} to {edge_end[1]}"):
+                assert distance == pytest.approx(4.0, rel=1e-6)
+
+    def test_distance_point_below_vertical_edge(self, subtests):
+
+        # the top of the polygon steps up or down at a vertical edge at x = 5
+        step_up = np.array([[0, 0], [10, 0], [10, 8], [5, 8], [5, 12], [0, 12]])
+        step_down = np.array([[0, 0], [10, 0], [10, 12], [5, 12], [5, 8], [0, 8]])
+        # a notch from the right side with its vertical left wall at x = 5
+        notch = np.array(
+            [[0, 0], [10, 0], [10, 8], [5, 8], [5, 10], [10, 10], [10, 14], [0, 14]]
+        )
+
+        for name, polygon, point, expected_distance in [
+            ("step up, below the step", step_up, [5.0, 4.0], -4.0),
+            ("step up, just right of the step", step_up, [5.0 + 1e-6, 4.0], -4.0),
+            ("step up, just left of the step", step_up, [5.0 - 1e-6, 4.0], -4.0),
+            ("step up, above the step", step_up, [5.0, 13.0], 1.0),
+            ("step down, below the step", step_down, [5.0, 4.0], -4.0),
+            ("step down, above the step", step_down, [5.0, 13.0], 1.0),
+            ("notch, below the wall", notch, [5.0, 4.0], -4.0),
+            ("notch, above the wall", notch, [5.0, 12.0], -2.0),
+        ]:
+
+            with subtests.test(name):
+                test_result = geo_utils.distance_point_to_polygon_ray_casting(
+                    np.array(point), vertices=polygon
+                )
+                assert test_result == pytest.approx(expected_distance, rel=1e-2)
+
+    def test_distance_point_to_stepped_polygon_matches_shapely(self, subtests):
+
+        shapely = pytest.importorskip("shapely")
+
+        # a stepped, lease-block style boundary with vertical edges at x = 2, 4, 6, 8
+        polygon = np.array(
+            [
+                [0, 0],
+                [6, 0],
+                [6, 2],
+                [10, 2],
+                [10, 7],
+                [8, 7],
+                [8, 9],
+                [4, 9],
+                [4, 6],
+                [2, 6],
+                [2, 10],
+                [0, 10],
+            ],
+            dtype=float,
+        )
+        shapely_polygon = shapely.Polygon(polygon)
+
+        # grid lines on and between the vertical edges, off every horizontal edge
+        points_x, points_y = np.meshgrid(
+            np.arange(-1.0, 11.5, 0.5), np.arange(-0.5, 11.0)
+        )
+        points = np.column_stack([points_x.ravel(), points_y.ravel()])
+        expected_inside = shapely.contains_xy(
+            shapely_polygon, points[:, 0], points[:, 1]
+        )
+
+        test_result = geo_utils.distance_multi_point_to_multi_polygon_ray_casting(
+            points[:, 0],
+            points[:, 1],
+            [polygon],
+            np.zeros(len(points), dtype=int),
+        )
+
+        for point, distance, inside in zip(
+            points, np.asarray(test_result), expected_inside
+        ):
+            if shapely_polygon.boundary.distance(shapely.Point(point)) < 1e-9:
+                continue
+            with subtests.test(f"point {point}"):
+                assert (distance < 0) == inside
 
     def test_distance_point_to_unitsquare_center(self):
 
